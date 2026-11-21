@@ -1,0 +1,22 @@
+{
+  "id": "/",
+  "name": "Retro Cam",
+  "short_name": "Retro Cam",
+  "description": "Kamera retro 2003 di saku: lensa film, date stamp oranye, foto dan video. Bisa dipakai offline.",
+  "lang": "id",
+  "start_url": "/camera?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e6dcc3",
+  "theme_color": "#d8cfb5",
+  "categories": ["photo", "entertainment"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Buka Kamera", "url": "/camera?source=shortcut", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#d8cfb5">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Retro Cam">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<title>Retro Cam</title>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/fonts.css">
+<style>
+  :root{--body:#e6dcc3;--body2:#cdc2a6;--key:#4d4a42;--lcd:#9fbf3a;--lcd-d:#2a3a14;--amber:#ff8a1f}
+  html,body{height:100%;margin:0;background:#2a2722;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+  body{font-family:'VT323',monospace;color:#dfe8c0;user-select:none;-webkit-user-select:none}
+  #app{position:relative;margin:0 auto;height:100dvh;max-width:440px;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,var(--body),var(--body2));
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  @media(min-width:520px){#app{height:min(100dvh - 24px,780px);margin-top:12px;border-radius:44px;border:4px solid #3b372f;box-shadow:0 30px 80px #000a}}
+  .status{display:flex;justify-content:space-between;align-items:center;padding:8px 18px 4px;font-size:22px;color:#5b5444}
+  .bars i{display:inline-block;width:4px;margin-right:2px;background:#5b5444;vertical-align:bottom}
+  .lcd{position:relative;margin:0 14px;border-radius:10px;overflow:hidden;background:#000;flex:1;min-height:0;
+    border:3px solid #3b372f;box-shadow:inset 0 0 0 2px #6b6454}
+  #cv{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#111}
+  .hud{position:absolute;left:0;right:0;display:flex;justify-content:space-between;padding:6px 10px;font-size:22px;color:#fff;text-shadow:0 0 4px #000,1px 1px 0 #000;pointer-events:none}
+  .hud.top{top:0}.hud.bot{bottom:0}
+  #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+  #flash.go{animation:fl .35s ease-out}
+  @keyframes fl{0%{opacity:.95}100%{opacity:0}}
+  #msg{position:absolute;inset:0;z-index:6;flex-direction:column;gap:14px;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:24px;color:var(--lcd);background:var(--lcd-d)}
+  .lenses{display:flex;gap:8px;overflow-x:auto;padding:10px 14px 4px;scrollbar-width:none}
+  .lenses::-webkit-scrollbar{display:none}
+  .chip{flex:none;padding:2px 12px;font-size:22px;border-radius:999px;border:2px solid #8a8068;color:#5b5444;background:transparent}
+  .chip.on{background:var(--lcd);color:var(--lcd-d);border-color:var(--lcd)}
+  .zoomrow{display:flex;align-items:center;gap:10px;padding:2px 18px}
+  .zoomrow button{width:34px;height:34px;border-radius:50%;background:var(--key);color:#f1e8d0;font-size:26px;line-height:1;border:2px solid #6b6454}
+  input[type=range]{flex:1;accent-color:var(--lcd)}
+  .keys{display:flex;align-items:center;justify-content:space-between;padding:6px 22px 14px}
+  .soft{width:68px;height:48px;border-radius:14px;background:var(--key);border:2px solid #6b6454;color:#f1e8d0;font-size:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1;overflow:hidden}
+  .soft img,.soft video{width:100%;height:100%;object-fit:cover}
+  .shutter{width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e0634a,#8f2c1a);border:4px solid #3b372f;box-shadow:0 0 0 3px #8a8068,0 6px 0 #3b372f;display:flex;align-items:center;justify-content:center}
+  .shutter:active{transform:translateY(4px);box-shadow:0 0 0 3px #8a8068,0 2px 0 #3b372f}
+  .shutter b{width:34px;height:34px;border-radius:50%;border:4px solid #f1e8d0}
+  button{cursor:pointer;font-family:inherit}
+  #dev{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;pointer-events:none;z-index:5}
+  #dev.go{animation:dev 1.2s ease-out forwards}
+  @keyframes dev{0%{opacity:1;filter:brightness(2.8) blur(16px) sepia(1) saturate(.3)}55%{opacity:1;filter:brightness(1.3) blur(4px) sepia(.5)}75%{opacity:1;filter:none}100%{opacity:0;filter:none}}
+  .shutter.vid b{border-color:#d9341c}
+  .shutter.rec b{background:#d9341c;border-color:#f1e8d0;border-radius:8px}
+  #menu{position:absolute;inset:0;z-index:25;background:#0008;display:none;align-items:flex-end}
+  #menu.open{display:flex}
+  .sheet{width:100%;background:#efe6cf;border-radius:22px 22px 0 0;padding:14px 18px calc(16px + env(safe-area-inset-bottom));color:#4a4437;font-size:22px;max-height:88%;overflow-y:auto}
+  .sheet h3{margin:0 0 4px;font-size:28px;font-weight:400}
+  .sheet label{display:flex;justify-content:space-between;margin-top:10px}
+  .sheet .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  /* galeri */
+  #gal{position:absolute;inset:0;z-index:20;background:var(--lcd-d);display:none;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  #gal.open{display:flex}
+  .ghead{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:26px;color:var(--lcd);border-bottom:2px solid #4a5f22}
+  .grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;align-content:start}
+  .grid img,.grid video{width:100%;aspect-ratio:3/4;object-fit:cover;background:#111}
+  .empty{grid-column:1/-1;text-align:center;color:var(--lcd);font-size:24px;padding:60px 20px}
+  #view{position:absolute;inset:0;z-index:30;background:#000;display:none;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  #view.open{display:flex}
+  #view img{flex:1;min-height:0;width:100%;object-fit:contain}
+  .vbar{display:flex;gap:10px;justify-content:center;padding:12px;background:var(--lcd-d)}
+  .vbar button{flex:1;max-width:120px;padding:4px 0;font-size:24px;border-radius:10px;background:var(--lcd);color:var(--lcd-d)}
+  .vbar button.del{background:#b4442c;color:#fff}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="status">
+    <span class="bars"><i style="height:5px"></i><i style="height:9px"></i><i style="height:13px"></i><i style="height:17px"></i></span>
+    <span>CAMERA</span>
+    <span id="clock">00:00</span>
+  </div>
+
+  <div class="lcd" id="lcd">
+    <canvas id="cv" width="300" height="400"></canvas>
+    <video id="v" playsinline muted autoplay style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></video>
+    <div class="hud top"><span id="lensName">KODAK</span><span id="zoomTxt">1.0x</span></div>
+    <div class="hud bot"><span id="stampBtnTxt">DATE ON</span><span id="count">0 foto</span></div>
+    <img id="dev" alt="">
+    <div id="flash"></div>
+    <div id="msg"><div id="msgTxt"></div><button class="chip on" id="camAsk">Nyalakan kamera</button></div>
+  </div>
+
+  <div class="lenses" id="lenses"></div>
+  <div class="zoomrow">
+    <button id="zout" aria-label="Zoom out">−</button>
+    <input type="range" id="zoom" min="1" max="5" step="0.1" value="1" aria-label="Zoom">
+    <button id="zin" aria-label="Zoom in">+</button>
+  </div>
+
+  <div class="keys">
+    <button class="soft" id="openGal" aria-label="Galeri"><span id="thumbTxt">Galeri</span></button>
+    <button class="shutter" id="shot" aria-label="Ambil foto"><b></b></button>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="soft" id="flip" style="height:24px;font-size:20px">Putar</button>
+      <button class="soft" id="menuBtn" style="height:24px;font-size:20px">Menu</button>
+    </div>
+  </div>
+
+  <div id="menu"><div class="sheet">
+    <h3>PENGATURAN</h3>
+    <label>Mode</label><div class="row" id="modeRow"><button class="chip on" data-m="photo">FOTO</button><button class="chip" data-m="video">VIDEO</button></div>
+    <label>Izin perangkat</label><div class="row"><button class="chip" id="camToggle"></button><button class="chip" id="micToggle"></button></div><div id="permNote" style="font-size:18px;opacity:.75;margin-top:4px"></div>
+    <label>Format</label><div class="row" id="fmtRow"></div>
+    <label>Kecerahan <span id="briTxt">0</span></label><input type="range" id="bri" min="-60" max="60" step="5" value="0">
+    <label>Stempel tanggal</label><div class="row"><button class="chip on" id="stampBtn">NYALA</button></div>
+    <button class="chip" id="closeMenu" style="margin-top:14px;width:100%">Selesai</button>
+  </div></div>
+  <div id="gal">
+    <div class="ghead"><span>GALERI</span><button id="closeGal" style="color:var(--lcd);font-size:26px">Kembali</button></div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <div id="view">
+    <img id="viewImg" alt="Foto"><video id="viewVid" controls playsinline style="display:none;flex:1;min-height:0;width:100%;background:#000"></video>
+    <div class="vbar"><button id="share">Bagikan</button><button id="dl">Simpan</button><button class="del" id="del">Hapus</button><button id="closeView">Tutup</button></div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const video = $('#v'), cv = $('#cv'), cx = cv.getContext('2d');
+const tmp = document.createElement('canvas'), tx = tmp.getContext('2d', { willReadFrequently: true });
+
+// ===== Lens =====
+// lw: lebar render rendah (efek pixel), sat/con/bri, mul/add: tint RGB, fade: hitam terangkat, grain, vig, scan: scanline
+const LENS = {
+  kodak:   { name:'KODAK',  sat:1.25, con:1.12, bri:6,  mul:[1.06,1.02,.9],  add:[6,4,-4],  fade:.10, grain:26, vig:.45 },
+  nokia:   { name:'NOKIA',  lw:120, pal:[[34,48,22],[74,98,42],[134,158,64],[184,206,96]], con:1.25, grain:10 },
+  vga:     { name:'VGA 2003', lw:200, sat:.8, con:1.1, bri:10, mul:[1,1.02,1.08], add:[0,4,8], fade:.06, grain:20, vig:.2 },
+  dispo:   { name:'DISPO',  sat:1.4, con:1.3, bri:22, mul:[1.1,1,.88], add:[10,0,-6], fade:.04, grain:34, vig:.65 },
+  vhs:     { name:'CAMCORDER', lw:240, sat:1.1, con:1.05, bri:4, mul:[.95,1.05,1.12], add:[0,6,12], fade:.12, grain:30, vig:.35, scan:1 },
+  bw:      { name:'B&W FILM', sat:0, con:1.35, bri:0, mul:[1,1,1], add:[0,0,0], fade:.08, grain:38, vig:.55 },
+  polaroid:{ name:'POLAROID', sat:.85, con:.95, bri:14, mul:[1.08,.98,1.0], add:[14,0,10], fade:.22, grain:16, vig:.3 }
+};
+// Parameter tambahan: bloom (cahaya meluber), hal (halation merah di highlight), leak (light leak), dust (debu & goresan), frame (bingkai)
+Object.assign(LENS.kodak,    { bloom:.18, hal:.25, leak:.30, dust:1 });
+Object.assign(LENS.dispo,    { bloom:.22, hal:.35, leak:.50, dust:1 });
+Object.assign(LENS.vga,      { bloom:.12 });
+Object.assign(LENS.polaroid, { bloom:.28, hal:.30, leak:.35, dust:1, frame:1 });
+Object.assign(LENS.bw,       { bloom:.15, dust:1 });
+LENS.dreamy = { name:'DREAMY', sat:1.05, con:.88, bri:18, mul:[1.07,1,1.08], add:[16,6,20], fade:.20, grain:18, vig:.40, bloom:.55, hal:.55, leak:.50, dust:1 };
+
+let seed = Math.random() * 1e9 | 0;
+const rnd = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+const bl = document.createElement('canvas'), bx = bl.getContext('2d');
+
+// Efek lapisan akhir: bloom, light leak, debu, bingkai
+function finish(ctx, W, H, L) {
+  const k = W / 300, r = rnd(seed);
+  if (L.bloom) {
+    bl.width = Math.round(W / 10); bl.height = Math.round(H / 10);
+    bx.drawImage(tmp, 0, 0, bl.width, bl.height);
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = L.bloom;
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bl, 0, 0, W, H); ctx.restore();
+  }
+  if (L.leak) {
+    const x = r() < .5 ? 0 : W, y = r() * H * .75, rad = W * (.6 + r() * .5);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    g.addColorStop(0, 'rgba(255,70,20,.9)'); g.addColorStop(.45, 'rgba(255,170,50,.4)'); g.addColorStop(1, 'rgba(255,200,80,0)');
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = L.leak;
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore();
+  }
+  if (L.dust) {
+    ctx.save();
+    for (let i = 0; i < 16; i++) {
+      ctx.fillStyle = r() < .7 ? 'rgba(255,255,255,.55)' : 'rgba(20,10,0,.45)';
+      ctx.beginPath(); ctx.arc(r() * W, r() * H, (.5 + r() * 1.3) * k, 0, 7); ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = Math.max(1, k * .6);
+    for (let i = 0; i < 2; i++) { const x = r() * W; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + (r() - .5) * 8 * k, H); ctx.stroke(); }
+    ctx.restore();
+  }
+  if (L.frame) { // bingkai Polaroid
+    const p = W * .06, b = W * .22;
+    ctx.fillStyle = '#f3eee1';
+    ctx.fillRect(0, 0, W, p); ctx.fillRect(0, 0, p, H); ctx.fillRect(W - p, 0, p, H); ctx.fillRect(0, H - b, W, b);
+    ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = k; ctx.strokeRect(p, p, W - 2 * p, H - p - b);
+  }
+}
+
+let lens = 'kodak', zoom = 1, facing = 'environment', stampOn = true, stream = null, last = 0, mirror = true;
+const FMT = { '3:4':[3,4], '4:5':[4,5], '1:1':[1,1], '9:16':[9,16], '4:3':[4,3], '16:9':[16,9] };
+let mode = 'photo', fmt = '3:4', userBri = 0, rec = null;
+const ls = { get: k => { try { return localStorage.getItem(k); } catch (_) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} } };
+let camActive = false, micPref = ls.get('rc_mic'); // micPref: '1' nyala, '0' mati, null = belum pernah ditanya
+function syncPerm() {
+  const c = $('#camToggle'), m = $('#micToggle');
+  c.textContent = 'KAMERA: ' + (camActive ? 'NYALA' : 'MATI'); c.classList.toggle('on', camActive);
+  m.textContent = 'MIKROFON: ' + (micPref === '1' ? 'NYALA' : 'MATI'); m.classList.toggle('on', micPref === '1');
+}
+function showMsg(t) { $('#msgTxt').textContent = t; $('#msg').style.display = 'flex'; }
+async function askMic() { // memunculkan dialog izin mikrofon
+  try { const m = await navigator.mediaDevices.getUserMedia({ audio: true }); m.getTracks().forEach(t => t.stop()); micPref = '1'; }
+  catch (_) { micPref = '0'; }
+  ls.set('rc_mic', micPref); syncPerm(); return micPref === '1';
+}
+function stopCam() {
+  if (rec) rec.stop();
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null; video.srcObject = null; camActive = false; ls.set('rc_cam', '0');
+  showMsg('Kamera dimatikan.'); syncPerm();
+}
+function dims(long) { const [a, b] = FMT[fmt]; return a <= b ? [Math.round(long * a / b), long] : [long, Math.round(long * b / a)]; }
+function hud() { $('#lensName').textContent = `${LENS[lens].name} · ${fmt}${mode === 'video' ? ' · VID' : ''}`; }
+function applyFormat() { const [w, h] = dims(mode === 'video' ? 480 : 400); cv.width = w; cv.height = h; hud(); }
+
+// ===== Render satu frame dengan efek lens =====
+function render(ctx, W, H) {
+  const L = LENS[lens];
+  const w = Math.min(W, L.lw || W), h = Math.round(w * H / W);
+  tmp.width = w; tmp.height = h;
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw) return;
+  const ar = w / h; let sw = vw, sh = vw / ar;
+  if (sh > vh) { sh = vh; sw = vh * ar; }
+  sw /= zoom; sh /= zoom;
+  tx.save();
+  if (mirror) { tx.translate(w, 0); tx.scale(-1, 1); }
+  tx.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, w, h);
+  tx.restore();
+
+  const im = tx.getImageData(0, 0, w, h), d = im.data, cxm = w / 2, cym = h / 2;
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+    let r = d[i], g = d[i+1], b = d[i+2];
+    const lum = .299*r + .587*g + .114*b;
+    if (L.pal) {
+      let v = (lum - 128) * L.con + 128 + userBri + (Math.random() - .5) * L.grain;
+      const k = v < 64 ? 0 : v < 128 ? 1 : v < 192 ? 2 : 3;
+      const c = L.pal[k]; d[i] = c[0]; d[i+1] = c[1]; d[i+2] = c[2];
+      continue;
+    }
+    const s = L.sat;
+    r = lum + (r - lum) * s; g = lum + (g - lum) * s; b = lum + (b - lum) * s;
+    const B0 = L.bri + userBri; r = (r - 128) * L.con + 128 + B0; g = (g - 128) * L.con + 128 + B0; b = (b - 128) * L.con + 128 + B0;
+    r = r * L.mul[0] + L.add[0]; g = g * L.mul[1] + L.add[1]; b = b * L.mul[2] + L.add[2];
+    r = r * (1 - L.fade) + L.fade * 70; g = g * (1 - L.fade) + L.fade * 66; b = b * (1 - L.fade) + L.fade * 80;
+    if (L.hal) { const hh = Math.max(0, lum - 170) * L.hal; r += hh * 1.2; g += hh * .3; }
+    const x = (p % w) - cxm, y = ((p / w) | 0) - cym;
+    const dist = (x*x + y*y) / (cxm*cxm + cym*cym);
+    const vg = 1 - L.vig * dist * 1.4;
+    const n = (Math.random() - .5) * L.grain;
+    let sc = 1; if (L.scan && ((p / w) | 0) % 3 === 0) sc = .82;
+    d[i] = (r * vg + n) * sc; d[i+1] = (g * vg + n) * sc; d[i+2] = (b * vg + n) * sc;
+  }
+  tx.putImageData(im, 0, 0);
+
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(tmp, 0, 0, W, H);
+
+  if (L.pal) { // garis kisi LCD Nokia
+    ctx.fillStyle = 'rgba(20,32,10,.18)';
+    const step = W / w;
+    for (let x = 0; x < W; x += step) ctx.fillRect(x, 0, 1, H);
+    for (let y = 0; y < H; y += step) ctx.fillRect(0, y, W, 1);
+  }
+  finish(ctx, W, H, L);
+  if (stampOn) drawStamp(ctx, W, H, L);
+}
+
+// ===== Stempel tanggal ala kamera film =====
+function stampText() {
+  const t = new Date(), p = n => String(n).padStart(2, '0');
+  return `${p(t.getDate())} ${p(t.getMonth() + 1)} '${String(t.getFullYear()).slice(2)}`;
+}
+function drawStamp(ctx, W, H, L) {
+  if (L.frame) {
+    ctx.save();
+    ctx.font = `600 ${Math.round(W * 0.085)}px 'Caveat', cursive`;
+    ctx.textAlign = 'center'; ctx.fillStyle = '#3b3a36';
+    ctx.translate(W / 2, H - W * 0.075); ctx.rotate(-0.025);
+    ctx.fillText(stampText(), 0, 0);
+    ctx.restore();
+    return;
+  }
+  const fs = Math.round(W * 0.075);
+  ctx.save();
+  ctx.font = `${fs}px 'VT323', monospace`;
+  ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+  const x = W - fs * 0.7, y = H - fs * 0.8;
+  ctx.shadowColor = L.pal ? 'transparent' : 'rgba(255,90,0,.9)'; ctx.shadowBlur = fs * 0.35;
+  ctx.fillStyle = L.pal ? '#1b2a0c' : '#ff8a1f';
+  ctx.fillText(stampText(), x, y);
+  ctx.restore();
+}
+
+// ===== Loop pratinjau (dibatasi fps agar terasa jadul) =====
+function loop(t) {
+  requestAnimationFrame(loop);
+  const gap = mode === 'video' ? 30 : (lens === 'nokia' ? 90 : 55);
+  if (t - last < gap) return;
+  last = t;
+  render(cx, cv.width, cv.height);
+}
+
+// ===== Kamera =====
+async function startCam() {
+  const msg = $('#msg');
+  try {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false
+    });
+    // Webcam laptop & kamera depan = dicerminkan (seperti selfie); kamera belakang = tidak
+    const fm = stream.getVideoTracks()[0].getSettings().facingMode;
+    mirror = fm ? fm !== 'environment' : true;
+    video.srcObject = stream; await video.play();
+    msg.style.display = 'none'; camActive = true; ls.set('rc_cam', '1'); syncPerm();
+  } catch (e) {
+    msg.style.display = 'flex';
+    camActive = false; syncPerm(); $('#msgTxt').textContent = 'Kamera belum aktif. Izinkan akses kamera di dialog browser (butuh HTTPS atau localhost).';
+  }
+}
+
+// ===== Zoom =====
+function setZoom(z) {
+  zoom = Math.min(5, Math.max(1, +z));
+  $('#zoom').value = zoom; $('#zoomTxt').textContent = zoom.toFixed(1) + 'x';
+}
+$('#zoom').oninput = e => setZoom(e.target.value);
+$('#zin').onclick = () => setZoom(zoom + .5);
+$('#zout').onclick = () => setZoom(zoom - .5);
+$('#lcd').addEventListener('wheel', e => { e.preventDefault(); setZoom(zoom + (e.deltaY < 0 ? .2 : -.2)); }, { passive: false });
+let pd = 0, pz = 1;
+const dist2 = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+$('#lcd').addEventListener('touchstart', e => { if (e.touches.length === 2) { pd = dist2(e.touches); pz = zoom; } }, { passive: true });
+$('#lcd').addEventListener('touchmove', e => { if (e.touches.length === 2 && pd) setZoom(pz * dist2(e.touches) / pd); }, { passive: true });
+$('#lcd').addEventListener('touchend', () => { pd = 0; });
+
+// ===== Pilih lens =====
+const lensBox = $('#lenses');
+Object.keys(LENS).forEach(k => {
+  const b = document.createElement('button');
+  b.className = 'chip' + (k === lens ? ' on' : ''); b.textContent = LENS[k].name; b.dataset.k = k;
+  b.onclick = () => {
+    lens = k; hud();
+    lensBox.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.k === k));
+  };
+  lensBox.appendChild(b);
+});
+
+$('#flip').onclick = () => { facing = facing === 'user' ? 'environment' : 'user'; startCam(); };
+$('#stampBtn').onclick = () => { stampOn = !stampOn; $('#stampBtnTxt').textContent = stampOn ? 'DATE ON' : 'DATE OFF'; $('#stampBtn').textContent = stampOn ? 'NYALA' : 'MATI'; $('#stampBtn').classList.toggle('on', stampOn); };
+
+// ===== Galeri (IndexedDB) =====
+let db;
+const openDB = () => new Promise((res, rej) => {
+  const r = indexedDB.open('retro-cam', 1);
+  r.onupgradeneeded = () => r.result.createObjectStore('photos', { keyPath: 'id', autoIncrement: true });
+  r.onsuccess = () => { db = r.result; res(); };
+  r.onerror = () => rej(r.error);
+});
+const store = m => db.transaction('photos', m).objectStore('photos');
+const allPhotos = () => new Promise(res => { const q = store('readonly').getAll(); q.onsuccess = () => res(q.result.reverse()); });
+const addPhoto = rec => new Promise(res => { const q = store('readwrite').add(rec); q.onsuccess = () => res(q.result); });
+const delPhoto = id => new Promise(res => { const q = store('readwrite').delete(id); q.onsuccess = res; });
+
+let urls = [], curId = null, curUrl = null, curVid = false, curMime = 'image/jpeg', curExt = 'jpg';
+function showView(u, isV) {
+  const im = $('#viewImg'), vv = $('#viewVid');
+  im.style.display = isV ? 'none' : 'block'; vv.style.display = isV ? 'block' : 'none';
+  if (isV) { vv.src = u; vv.play().catch(() => {}); } else { vv.pause(); im.src = u; }
+  $('#view').classList.add('open');
+}
+async function refreshGallery() {
+  urls.forEach(URL.revokeObjectURL); urls = [];
+  const list = await allPhotos();
+  $('#count').textContent = list.length + ' item';
+  const th = $('#openGal');
+  if (list[0]) { const u = URL.createObjectURL(list[0].blob); urls.push(u); th.innerHTML = list[0].type === 'video' ? `<video src="${u}" muted playsinline></video>` : `<img src="${u}" alt="">`; }
+  else th.innerHTML = '<span>Galeri</span>';
+  const grid = $('#grid'); grid.innerHTML = '';
+  if (!list.length) { grid.innerHTML = '<div class="empty">Belum ada foto.<br>Ambil foto pertamamu.</div>'; return; }
+  list.forEach(p => {
+    const u = URL.createObjectURL(p.blob); urls.push(u);
+    const isV = p.type === 'video'; const im = document.createElement(isV ? 'video' : 'img'); im.src = u; im.alt = 'Foto ' + p.date; if (isV) { im.muted = true; im.preload = 'metadata'; im.playsInline = true; } else im.loading = 'lazy';
+    im.onclick = () => { curId = p.id; curUrl = u; curVid = isV; curMime = p.blob.type || (isV ? 'video/webm' : 'image/jpeg'); curExt = isV ? (curMime.includes('mp4') ? 'mp4' : 'webm') : 'jpg'; showView(u, isV); };
+    grid.appendChild(im);
+  });
+}
+$('#openGal').onclick = () => { refreshGallery(); $('#gal').classList.add('open'); };
+$('#closeGal').onclick = () => $('#gal').classList.remove('open');
+$('#closeView').onclick = () => { $('#viewVid').pause(); $('#view').classList.remove('open'); };
+$('#del').onclick = async () => { $('#viewVid').pause(); await delPhoto(curId); $('#view').classList.remove('open'); refreshGallery(); };
+$('#share').onclick = async () => {
+  const btn = $('#share');
+  try {
+    const blob = await (await fetch(curUrl)).blob();
+    const file = new File([blob], `retro-cam-${curId}.${curExt}`, { type: curMime });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Retro Cam', text: 'Dijepret pakai Retro Cam 📷' });
+    } else {
+      $('#dl').click(); // browser belum mendukung berbagi file (mis. desktop): unduh saja
+      btn.textContent = 'Terunduh'; setTimeout(() => btn.textContent = 'Bagikan', 1800);
+    }
+  } catch (e) { /* dibatalkan pengguna */ }
+};
+$('#dl').onclick = () => { const a = document.createElement('a'); a.href = curUrl; a.download = `retro-cam-${curId}.${curExt}`; a.click(); };
+
+// ===== Ambil foto =====
+function click() {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    [0, .07].forEach(t => {
+      const n = ac.sampleRate * .08 | 0, buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4);
+      const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+      s.buffer = buf; f.type = 'bandpass'; f.frequency.value = t ? 1500 : 2400; g.gain.value = .6;
+      s.connect(f); f.connect(g); g.connect(ac.destination); s.start(ac.currentTime + t);
+    });
+  } catch (_) {}
+}
+function beep() {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)(), o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square'; o.frequency.value = 1400; g.gain.value = .06;
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + .08);
+  } catch (_) {}
+}
+let recTimer = 0, chunks = [], recStart = 0;
+async function toggleRec() {
+  if (rec) { rec.stop(); return; }
+  if (!video.videoWidth) return;
+  if (!window.MediaRecorder) { $('#msg').style.display = 'flex'; $('#msgTxt').textContent = 'Browser ini belum mendukung rekam video.'; return; }
+  const types = ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  const mime = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+  const out = cv.captureStream(30); let mic = null;
+  if (micPref === null) await askMic(); // pertama kali rekam video: minta izin mikrofon
+  if (micPref === '1') { try { mic = await navigator.mediaDevices.getUserMedia({ audio: true }); mic.getAudioTracks().forEach(t => out.addTrack(t)); } catch (_) {} }
+  chunks = [];
+  rec = new MediaRecorder(out, { mimeType: mime || undefined, videoBitsPerSecond: 3000000 });
+  rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  rec.onstop = async () => {
+    clearInterval(recTimer); $('#shot').classList.remove('rec'); if (mic) mic.getTracks().forEach(t => t.stop());
+    const blob = new Blob(chunks, { type: rec.mimeType || mime || 'video/webm' });
+    rec = null;
+    await addPhoto({ blob, type: 'video', lens, date: stampText(), ts: Date.now() });
+    refreshGallery();
+  };
+  rec.start(1000); beep(); recStart = Date.now(); $('#shot').classList.add('rec');
+  recTimer = setInterval(() => { const t = (Date.now() - recStart) / 1000 | 0; $('#count').textContent = '● ' + String(t / 60 | 0).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }, 500);
+}
+$('#shot').onclick = async () => {
+  if (!rec && !video.videoWidth) { startCam(); return; } // pertama kali: munculkan dialog izin kamera
+  if (mode === 'video') return toggleRec();
+  if (!video.videoWidth) return;
+  beep();
+  const f = $('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+  seed = Math.random() * 1e9 | 0; // posisi light leak & debu unik tiap foto
+  const c = document.createElement('canvas'); const [cw, ch] = dims(1200); c.width = cw; c.height = ch;
+  render(c.getContext('2d'), c.width, c.height);
+  c.toBlob(async blob => {
+    const u = URL.createObjectURL(blob), dv = $('#dev');
+    dv.src = u; dv.classList.remove('go'); void dv.offsetWidth; dv.classList.add('go');
+    setTimeout(() => URL.revokeObjectURL(u), 4500);
+    await addPhoto({ blob, lens, date: stampText(), ts: Date.now() });
+    refreshGallery();
+  }, 'image/jpeg', .9);
+};
+
+// ===== Menu pengaturan =====
+const menu = $('#menu'), fmtRow = $('#fmtRow'), modeRow = $('#modeRow');
+$('#menuBtn').onclick = () => menu.classList.add('open');
+$('#closeMenu').onclick = () => menu.classList.remove('open');
+menu.onclick = e => { if (e.target === menu) menu.classList.remove('open'); };
+Object.keys(FMT).forEach(k => {
+  const b = document.createElement('button'); b.className = 'chip' + (k === fmt ? ' on' : ''); b.textContent = k; b.dataset.k = k;
+  b.onclick = () => { if (rec) return; fmt = k; fmtRow.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.k === k)); applyFormat(); };
+  fmtRow.appendChild(b);
+});
+modeRow.querySelectorAll('.chip').forEach(b => b.onclick = () => {
+  if (rec) rec.stop();
+  mode = b.dataset.m; modeRow.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b));
+  $('#shot').classList.toggle('vid', mode === 'video'); applyFormat();
+});
+$('#camToggle').onclick = () => camActive ? stopCam() : startCam();
+$('#micToggle').onclick = async () => {
+  if (micPref === '1') { micPref = '0'; ls.set('rc_mic', '0'); syncPerm(); $('#permNote').textContent = 'Video direkam tanpa suara.'; return; }
+  const ok = await askMic();
+  $('#permNote').textContent = ok ? 'Mikrofon aktif: video direkam dengan suara.' : 'Mikrofon ditolak. Izinkan lewat pengaturan situs di browser.';
+};
+$('#camAsk').onclick = () => startCam();
+$('#bri').oninput = e => { userBri = +e.target.value; $('#briTxt').textContent = (userBri > 0 ? '+' : '') + userBri; };
+
+// ===== Jam status & start =====
+setInterval(() => { const t = new Date(); $('#clock').textContent = String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0'); }, 1000);
+(async () => {
+  $('#clock').textContent = new Date().toTimeString().slice(0, 5);
+  await openDB(); await refreshGallery();
+  if (document.fonts) await Promise.all([document.fonts.load("20px 'VT323'"), document.fonts.load("600 20px 'Caveat'")]);
+  applyFormat(); syncPerm(); requestAnimationFrame(loop);
+  if (ls.get('rc_cam') === '1') await startCam(); else showMsg('Izinkan akses kamera untuk mulai memotret.');
+})();
+</script>
+<script src="/js/pwa.js" defer></script>
+</body>
+</html>
