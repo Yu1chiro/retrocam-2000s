@@ -154,6 +154,7 @@ html[data-theme=silver]{--body:#e4e7ec;--body2:#aeb6c1;--key:#4a5361;--lcd:#5aa6
     <label>Format</label><div class="row" id="fmtRow"></div>
     <label>Brightness <span id="briTxt">0</span></label><input type="range" id="bri" min="-60" max="60" step="5" value="0">
     <label>Date stamp</label><div class="row"><button class="chip on" id="stampBtn">ON</button></div>
+    <label>Template (photo &amp; video)</label><div class="row" id="tplMenuRow"></div>
     <label>Camera theme</label><div class="row" id="themeRow"></div>
     <button class="chip" id="closeMenu" style="margin-top:14px;width:100%">Done</button>
   </div></div>
@@ -368,6 +369,7 @@ function loop(t) {
   if (t - last < gap) return;
   last = t;
   render(cx, cv.width, cv.height);
+  if (rec && vcOn) drawVidTpl();
 }
 
 // ===== Kamera =====
@@ -511,7 +513,8 @@ async function toggleRec() {
   if (!window.MediaRecorder) { $('#msg').style.display = 'flex'; $('#msgTxt').textContent = 'This browser does not support video recording.'; return; }
   const types = ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
   const mime = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
-  const out = cv.captureStream(30); let mic = null;
+  vcOn = tplKey !== 'none'; if (vcOn) drawVidTpl();
+  const out = (vcOn ? vc : cv).captureStream(30); let mic = null;
   if (micPref === null) await askMic(); // pertama kali rekam video: minta izin mikrofon
   if (micPref === '1') { try { mic = await navigator.mediaDevices.getUserMedia({ audio: true }); mic.getAudioTracks().forEach(t => out.addTrack(t)); } catch (_) {} }
   chunks = [];
@@ -520,8 +523,8 @@ async function toggleRec() {
   rec.onstop = async () => {
     clearInterval(recTimer); $('#shot').classList.remove('rec'); if (mic) mic.getTracks().forEach(t => t.stop());
     const blob = new Blob(chunks, { type: rec.mimeType || mime || 'video/webm' });
-    rec = null;
-    await addPhoto({ blob, type: 'video', lens, date: stampText(), ts: Date.now() });
+    rec = null; vcOn = false;
+    await addPhoto({ blob, type: 'video', lens, date: stampText(), ts: Date.now(), tpl: tplKey });
     refreshGallery();
   };
   rec.start(1000); beep(); recStart = Date.now(); $('#shot').classList.add('rec');
@@ -592,19 +595,21 @@ function rrect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x 
 function tplMake(src, key, meta) {
   if (key === 'none') return src;
   const W = src.width, H = src.height, k = W / 1200;
-  const o = document.createElement('canvas'), g = o.getContext('2d');
+  const o = meta.out || document.createElement('canvas'), g = o.getContext('2d');
+  const ev = n => Math.round(n / 2) * 2, sz = (w, h) => { w = ev(w); h = ev(h); if (o.width !== w || o.height !== h) { o.width = w; o.height = h; } };
   const nm = (LENS[meta.lens] || { name: 'RETRO' }).name, d = new Date(meta.ts), p2 = n => String(n).padStart(2, '0');
   const txt = (t, x, y, font, col, al) => { g.font = font; g.fillStyle = col; g.textAlign = al || 'left'; g.textBaseline = 'alphabetic'; g.fillText(t, x, y); };
   g.imageSmoothingQuality = 'high';
+  g.setTransform(1, 0, 0, 1, 0, 0); g.shadowColor = 'transparent'; g.shadowBlur = 0; g.shadowOffsetX = g.shadowOffsetY = 0; g.globalAlpha = 1; g.setLineDash([]);
   if (key === 'polaroid') {
-    const p = W * .07, b = W * .26; o.width = Math.round(W + 2 * p); o.height = Math.round(H + p + b);
+    const p = W * .07, b = W * .26; sz(Math.round(W + 2 * p), Math.round(H + p + b));
     const bg = g.createLinearGradient(0, 0, 0, o.height); bg.addColorStop(0, '#f7f2e4'); bg.addColorStop(1, '#e9e1cc');
     g.fillStyle = bg; g.fillRect(0, 0, o.width, o.height);
     g.drawImage(src, p, p);
     g.strokeStyle = 'rgba(0,0,0,.28)'; g.lineWidth = 2 * k; g.strokeRect(p, p, W, H);
     txt(meta.date, o.width / 2, H + p + b * .62, `600 ${W * .085}px 'Caveat', cursive`, '#3b3a36', 'center');
   } else if (key === 'instant') {
-    const p = W * .09, b = W * .34; o.width = Math.round(W + 2 * p); o.height = Math.round(H + p + b);
+    const p = W * .09, b = W * .34; sz(Math.round(W + 2 * p), Math.round(H + p + b));
     g.fillStyle = '#fcfbf7'; g.fillRect(0, 0, o.width, o.height);
     g.drawImage(src, p, p);
     ['#e8453c', '#f28c28', '#f6d02f', '#4caf50', '#2f7fd1'].forEach((c, i) => { g.fillStyle = c; g.fillRect(p + i * W * .1, H + p + b * .16, W * .1, W * .02); });
@@ -612,7 +617,7 @@ function tplMake(src, key, meta) {
     txt(meta.date, o.width - p, H + p + b * .62, `600 ${W * .075}px 'Caveat', cursive`, '#3b3a36', 'right');
     txt(nm, p, H + p + b * .82, `${W * .045}px 'VT323', monospace`, '#a39d8d');
   } else if (key === 'film') {
-    const bar = W * .15, side = W * .04; o.width = Math.round(W + 2 * side); o.height = Math.round(H + 2 * bar);
+    const bar = W * .15, side = W * .04; sz(Math.round(W + 2 * side), Math.round(H + 2 * bar));
     g.fillStyle = '#1d130b'; g.fillRect(0, 0, o.width, o.height);
     g.drawImage(src, side, bar);
     const hw = W * .045, hh = W * .034, step = W * .075;
@@ -623,7 +628,7 @@ function tplMake(src, key, meta) {
     txt(nm, side, o.height - bar + (bar * .88 - hh) * .7, f, amber);
     txt('12A  >', o.width - side, o.height - bar + (bar * .88 - hh) * .7, f, amber, 'right');
   } else if (key === 'postcard') {
-    const m = W * .06, top = W * .2, bot = W * .17; o.width = Math.round(W + 2 * m); o.height = Math.round(H + top + bot);
+    const m = W * .06, top = W * .2, bot = W * .17; sz(Math.round(W + 2 * m), Math.round(H + top + bot));
     g.fillStyle = '#efe3c4'; g.fillRect(0, 0, o.width, o.height);
     g.fillStyle = 'rgba(120,90,50,.06)'; for (let y = 0; y < o.height; y += 7 * k) g.fillRect(0, y, o.width, k);
     const q = W * .025; g.save(); g.translate(m + W / 2, top + H / 2); g.rotate(-.012);
@@ -642,7 +647,7 @@ function tplMake(src, key, meta) {
     txt('WISH YOU WERE HERE', o.width / 2, H + top + bot * .5, `${W * .05}px 'Special Elite', serif`, '#6b4a3a', 'center');
     txt(`${nm} - ${meta.date}`, o.width / 2, H + top + bot * .8, `${W * .04}px 'VT323', monospace`, '#8b6f5a', 'center');
   } else if (key === 'camcorder') {
-    o.width = W; o.height = H; g.drawImage(src, 0, 0);
+    sz(W, H); g.drawImage(src, 0, 0);
     const m = W * .07, fs = W * .06, L = W * .06, f = `${fs}px 'VT323', monospace`;
     g.shadowColor = 'rgba(0,0,0,.85)'; g.shadowBlur = 4 * k; g.shadowOffsetX = g.shadowOffsetY = 2 * k;
     g.strokeStyle = '#fff'; g.lineWidth = 4 * k;
@@ -662,9 +667,20 @@ let pend = null, pendOut = null;
 const tplRow = $('#tplRow');
 Object.keys(TPL).forEach(k => {
   const b = document.createElement('button'); b.className = 'chip'; b.textContent = TPL[k]; b.dataset.k = k;
-  b.onclick = () => { tplKey = k; ls.set('rc_tpl', k); drawTpl(); };
+  b.onclick = () => setTpl(k);
   tplRow.appendChild(b);
 });
+const tplMenuRow = $('#tplMenuRow');
+Object.keys(TPL).forEach(k => {
+  const b = document.createElement('button'); b.className = 'chip'; b.textContent = TPL[k]; b.dataset.k = k;
+  b.onclick = () => setTpl(k); tplMenuRow.appendChild(b);
+});
+function syncTpl() { [tplRow, tplMenuRow].forEach(r => r.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.k === tplKey))); }
+function setTpl(k) { if (rec) return; tplKey = k; ls.set('rc_tpl', k); syncTpl(); if (pend) drawTpl(); }
+syncTpl();
+// Video: setiap frame dibungkus template, lalu direkam dari kanvas ini
+const vc = document.createElement('canvas'); let vcOn = false;
+function drawVidTpl() { tplMake(cv, tplKey, { lens, ts: Date.now(), date: stampText(), out: vc }); }
 function drawTpl() {
   pendOut = tplMake(pend.c, tplKey, pend);
   const pv = $('#tplCv'), sc = Math.min(1, 700 / pendOut.width);
