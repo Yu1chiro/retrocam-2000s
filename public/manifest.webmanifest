@@ -2,8 +2,8 @@
   "id": "/",
   "name": "Retro Cam",
   "short_name": "Retro Cam",
-  "description": "Kamera retro 2003 di saku: lensa film, date stamp oranye, foto dan video. Bisa dipakai offline.",
-  "lang": "id",
+  "description": "A 2003 pocket film camera: dreamy lenses, a glowing date stamp, photo and video. Works offline.",
+  "lang": "en",
   "start_url": "/camera?source=pwa",
   "scope": "/",
   "display": "standalone",
@@ -17,6 +17,6 @@
     { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Buka Kamera", "url": "/camera?source=shortcut", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Open Camera", "url": "/camera?source=shortcut", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
@@ -15,17 +15,19 @@
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/fonts.css">
 <style>
-  :root{--body:#e6dcc3;--body2:#cdc2a6;--key:#4d4a42;--lcd:#9fbf3a;--lcd-d:#2a3a14;--amber:#ff8a1f}
-  html,body{height:100%;margin:0;background:#2a2722;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+  :root{--body:#e6dcc3;--body2:#cdc2a6;--key:#4d4a42;--lcd:#9fbf3a;--lcd-d:#2a3a14;--amber:#ff8a1f;
+    --edge:#3b372f;--tx:#5b5444;--tx2:#6b6454;--line:#8a8068;--sheet:#efe6cf;--sheet-tx:#4a4437;--keytx:#f1e8d0;--bg:#2a2722;--lcd-line:#4a5f22;--shut1:#e0634a;--shut2:#8f2c1a;
+    --gal-bg:#e6dcc3;--gal-card:#f7f1e0;--gal-ink:#3f3a2e;--gal-acc:#3d6aa6;--gal-line:#b9ad8f;--gal-on:#fff}
+  html,body{height:100%;margin:0;background:var(--bg);overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
   body{font-family:'VT323',monospace;color:#dfe8c0;user-select:none;-webkit-user-select:none}
   #app{position:relative;margin:0 auto;height:100dvh;max-width:440px;display:flex;flex-direction:column;
     background:linear-gradient(180deg,var(--body),var(--body2));
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-  @media(min-width:520px){#app{height:min(100dvh - 24px,780px);margin-top:12px;border-radius:44px;border:4px solid #3b372f;box-shadow:0 30px 80px #000a}}
-  .status{display:flex;justify-content:space-between;align-items:center;padding:8px 18px 4px;font-size:22px;color:#5b5444}
-  .bars i{display:inline-block;width:4px;margin-right:2px;background:#5b5444;vertical-align:bottom}
+  @media(min-width:520px){#app{height:min(100dvh - 24px,780px);margin-top:12px;border-radius:44px;border:4px solid var(--edge);box-shadow:0 30px 80px #000a}}
+  .status{display:flex;justify-content:space-between;align-items:center;padding:8px 18px 4px;font-size:22px;color:var(--tx)}
+  .bars i{display:inline-block;width:4px;margin-right:2px;background:var(--tx);vertical-align:bottom}
   .lcd{position:relative;margin:0 14px;border-radius:10px;overflow:hidden;background:#000;flex:1;min-height:0;
-    border:3px solid #3b372f;box-shadow:inset 0 0 0 2px #6b6454}
+    border:3px solid var(--edge);box-shadow:inset 0 0 0 2px var(--tx2)}
   #cv{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#111}
   .hud{position:absolute;left:0;right:0;display:flex;justify-content:space-between;padding:6px 10px;font-size:22px;color:#fff;text-shadow:0 0 4px #000,1px 1px 0 #000;pointer-events:none}
   .hud.top{top:0}.hud.bot{bottom:0}
@@ -35,33 +37,33 @@
   #msg{position:absolute;inset:0;z-index:6;flex-direction:column;gap:14px;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:24px;color:var(--lcd);background:var(--lcd-d)}
   .lenses{display:flex;gap:8px;overflow-x:auto;padding:10px 14px 4px;scrollbar-width:none}
   .lenses::-webkit-scrollbar{display:none}
-  .chip{flex:none;padding:2px 12px;font-size:22px;border-radius:999px;border:2px solid #8a8068;color:#5b5444;background:transparent}
+  .chip{flex:none;padding:2px 12px;font-size:22px;border-radius:999px;border:2px solid var(--line);color:var(--tx);background:transparent}
   .chip.on{background:var(--lcd);color:var(--lcd-d);border-color:var(--lcd)}
   .zoomrow{display:flex;align-items:center;gap:10px;padding:2px 18px}
-  .zoomrow button{width:34px;height:34px;border-radius:50%;background:var(--key);color:#f1e8d0;font-size:26px;line-height:1;border:2px solid #6b6454}
+  .zoomrow button{width:34px;height:34px;border-radius:50%;background:var(--key);color:var(--keytx);font-size:26px;line-height:1;border:2px solid var(--tx2)}
   input[type=range]{flex:1;accent-color:var(--lcd)}
   .keys{display:flex;align-items:center;justify-content:space-between;padding:6px 22px 14px}
-  .soft{width:68px;height:48px;border-radius:14px;background:var(--key);border:2px solid #6b6454;color:#f1e8d0;font-size:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1;overflow:hidden}
+  .soft{width:68px;height:48px;border-radius:14px;background:var(--key);border:2px solid var(--tx2);color:var(--keytx);font-size:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1;overflow:hidden}
   .soft img,.soft video{width:100%;height:100%;object-fit:cover}
-  .shutter{width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e0634a,#8f2c1a);border:4px solid #3b372f;box-shadow:0 0 0 3px #8a8068,0 6px 0 #3b372f;display:flex;align-items:center;justify-content:center}
-  .shutter:active{transform:translateY(4px);box-shadow:0 0 0 3px #8a8068,0 2px 0 #3b372f}
-  .shutter b{width:34px;height:34px;border-radius:50%;border:4px solid #f1e8d0}
+  .shutter{width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--shut1),var(--shut2));border:4px solid var(--edge);box-shadow:0 0 0 3px var(--line),0 6px 0 var(--edge);display:flex;align-items:center;justify-content:center}
+  .shutter:active{transform:translateY(4px);box-shadow:0 0 0 3px var(--line),0 2px 0 var(--edge)}
+  .shutter b{width:34px;height:34px;border-radius:50%;border:4px solid var(--keytx)}
   button{cursor:pointer;font-family:inherit}
   #dev{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;pointer-events:none;z-index:5}
   #dev.go{animation:dev 1.2s ease-out forwards}
   @keyframes dev{0%{opacity:1;filter:brightness(2.8) blur(16px) sepia(1) saturate(.3)}55%{opacity:1;filter:brightness(1.3) blur(4px) sepia(.5)}75%{opacity:1;filter:none}100%{opacity:0;filter:none}}
   .shutter.vid b{border-color:#d9341c}
-  .shutter.rec b{background:#d9341c;border-color:#f1e8d0;border-radius:8px}
+  .shutter.rec b{background:#d9341c;border-color:var(--keytx);border-radius:8px}
   #menu{position:absolute;inset:0;z-index:25;background:#0008;display:none;align-items:flex-end}
   #menu.open{display:flex}
-  .sheet{width:100%;background:#efe6cf;border-radius:22px 22px 0 0;padding:14px 18px calc(16px + env(safe-area-inset-bottom));color:#4a4437;font-size:22px;max-height:88%;overflow-y:auto}
+  .sheet{width:100%;background:var(--sheet);border-radius:22px 22px 0 0;padding:14px 18px calc(16px + env(safe-area-inset-bottom));color:var(--sheet-tx);font-size:22px;max-height:88%;overflow-y:auto}
   .sheet h3{margin:0 0 4px;font-size:28px;font-weight:400}
   .sheet label{display:flex;justify-content:space-between;margin-top:10px}
   .sheet .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
   /* galeri */
   #gal{position:absolute;inset:0;z-index:20;background:var(--lcd-d);display:none;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
   #gal.open{display:flex}
-  .ghead{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:26px;color:var(--lcd);border-bottom:2px solid #4a5f22}
+  .ghead{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:26px;color:var(--lcd);border-bottom:2px solid var(--lcd-line)}
   .grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;align-content:start}
   .grid img,.grid video{width:100%;aspect-ratio:3/4;object-fit:cover;background:#111}
   .empty{grid-column:1/-1;text-align:center;color:var(--lcd);font-size:24px;padding:60px 20px}
@@ -71,6 +73,42 @@
   .vbar{display:flex;gap:10px;justify-content:center;padding:12px;background:var(--lcd-d)}
   .vbar button{flex:1;max-width:120px;padding:4px 0;font-size:24px;border-radius:10px;background:var(--lcd);color:var(--lcd-d)}
   .vbar button.del{background:#b4442c;color:#fff}
+
+  /* ===== Timer ===== */
+  #cd{position:absolute;inset:0;z-index:7;display:none;align-items:center;justify-content:center;font-size:150px;color:#fff;text-shadow:0 0 18px #000,4px 4px 0 #000;background:#0003;pointer-events:none;animation:cdpop 1s ease-out infinite}
+  @keyframes cdpop{0%{transform:scale(1.5);opacity:.4}25%{transform:scale(1);opacity:1}100%{transform:scale(.9);opacity:.9}}
+  #dev{object-fit:contain;background:#111}
+  .sw{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid var(--edge);margin-right:6px;vertical-align:middle}
+  /* ===== Galeri cream/biru ===== */
+  #gal{background:var(--gal-bg)}
+  .ghead{background:var(--gal-card);color:var(--gal-ink);border-bottom:3px double var(--gal-line);font-size:28px}
+  .ghead button{color:var(--gal-acc)!important;border:2px solid var(--gal-acc);border-radius:10px;padding:0 12px;font-size:24px!important;background:transparent}
+  .grid{grid-template-columns:repeat(2,1fr);gap:14px;padding:14px}
+  .card{background:var(--gal-card);border:2px solid var(--gal-line);border-radius:12px;padding:8px 8px 6px;box-shadow:0 4px 0 var(--gal-line);cursor:pointer;transition:transform .12s,box-shadow .12s;outline:none}
+  .card:active,.card:focus-visible{transform:translateY(3px);box-shadow:0 1px 0 var(--gal-line)}
+  .card .ph{position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;background:var(--gal-bg);border:2px solid var(--gal-acc)}
+  .card .ph img,.card .ph video{width:100%;height:100%;object-fit:contain;aspect-ratio:auto;display:block}
+  .card .tag{position:absolute;left:6px;top:6px;padding:0 8px;font-size:18px;line-height:1.3;background:var(--gal-acc);color:var(--gal-on);border-radius:999px}
+  .card .cap{display:flex;justify-content:space-between;gap:6px;margin-top:6px;font-size:20px;line-height:1;color:var(--gal-ink)}
+  .card .cap b{font-weight:400;color:var(--gal-acc)}
+  .empty{color:var(--gal-ink)}
+  .vbar{background:var(--gal-card);border-top:3px double var(--gal-line)}
+  .vbar button{background:var(--gal-acc);color:var(--gal-on)}
+  /* ===== Template sebelum simpan ===== */
+  #tpl{position:absolute;inset:0;z-index:35;background:var(--gal-bg);display:none;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  #tpl.open{display:flex}
+  .tplwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:14px}
+  #tplCv{max-width:100%;max-height:100%;box-shadow:0 10px 24px #0005}
+  .tplrow{display:flex;gap:8px;overflow-x:auto;padding:8px 14px;scrollbar-width:none}
+  .tplrow::-webkit-scrollbar{display:none}
+  .tplrow .chip{color:var(--gal-ink);border-color:var(--gal-line)}
+  .tplrow .chip.on{background:var(--gal-acc);color:var(--gal-on);border-color:var(--gal-acc)}
+  /* ===== Tema kamera ===== */
+html[data-theme=blue]{--body:#cfe2f5;--body2:#9fbddf;--key:#2d4a78;--lcd:#5fb4ff;--lcd-d:#0e2a4d;--edge:#1c2f50;--tx:#2d4a78;--tx2:#4a6a99;--line:#6f8fb8;--sheet:#e7f0fa;--sheet-tx:#1f3556;--keytx:#eaf3ff;--bg:#101c2e;--lcd-line:#2b5a96;--shut1:#ff7a5c;--shut2:#b0301c;--gal-bg:#bcd3ec;--gal-card:#f1f6fc;--gal-ink:#1f3556;--gal-acc:#2a62b0;--gal-line:#8fb0d8}
+html[data-theme=black]{--body:#4a4a4e;--body2:#26262a;--key:#0e0e10;--lcd:#ff9a2e;--lcd-d:#1c1308;--edge:#0a0a0b;--tx:#c9c3b6;--tx2:#a39d90;--line:#6d6a63;--sheet:#2c2c30;--sheet-tx:#ebe5d6;--keytx:#f1e8d0;--bg:#0a0a0b;--lcd-line:#6b4513;--shut1:#ff5a3c;--shut2:#9e1d0c;--gal-bg:#232326;--gal-card:#323237;--gal-ink:#ebe5d6;--gal-acc:#ff9a2e;--gal-line:#4b4b52;--gal-on:#1c1308}
+html[data-theme=pink]{--body:#fbdbe8;--body2:#eeaac8;--key:#8a3d62;--lcd:#ff7fb8;--lcd-d:#4a1530;--edge:#5a1f3e;--tx:#8a3d62;--tx2:#a8567e;--line:#c27a9c;--sheet:#fdeaf2;--sheet-tx:#5a1f3e;--keytx:#fff0f6;--bg:#2b0f1e;--lcd-line:#a8386f;--shut1:#ff6b8f;--shut2:#b0204a;--gal-bg:#f4c8da;--gal-card:#fff2f7;--gal-ink:#5a1f3e;--gal-acc:#c2457c;--gal-line:#dd9bb8}
+html[data-theme=mint]{--body:#d7efe4;--body2:#a2cdb9;--key:#3e5f52;--lcd:#47c28f;--lcd-d:#10332a;--edge:#1f3a30;--tx:#3e5f52;--tx2:#5a7d6f;--line:#7fa896;--sheet:#eaf7f0;--sheet-tx:#1f3a30;--keytx:#effaf4;--bg:#0f2019;--lcd-line:#2b7a5c;--shut1:#ff7a5c;--shut2:#b0301c;--gal-bg:#bfe0d1;--gal-card:#f1faf5;--gal-ink:#1f3a30;--gal-acc:#2f8d68;--gal-line:#8fc3ad}
+html[data-theme=silver]{--body:#e4e7ec;--body2:#aeb6c1;--key:#4a5361;--lcd:#5aa6e0;--lcd-d:#16273a;--edge:#2b3340;--tx:#4a5361;--tx2:#667082;--line:#8c96a6;--sheet:#eef0f4;--sheet-tx:#2b3340;--keytx:#f2f4f8;--bg:#1b1f26;--lcd-line:#3b6a96;--shut1:#ff6f4f;--shut2:#a8281a;--gal-bg:#d0d6df;--gal-card:#f6f7fa;--gal-ink:#2b3340;--gal-acc:#3b6fb0;--gal-line:#a3adbb}
 </style>
 </head>
 <body>
@@ -85,10 +123,11 @@
     <canvas id="cv" width="300" height="400"></canvas>
     <video id="v" playsinline muted autoplay style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></video>
     <div class="hud top"><span id="lensName">KODAK</span><span id="zoomTxt">1.0x</span></div>
-    <div class="hud bot"><span id="stampBtnTxt">DATE ON</span><span id="count">0 foto</span></div>
+    <div class="hud bot"><span id="stampBtnTxt">DATE ON</span><span id="count">0 photos</span></div>
     <img id="dev" alt="">
     <div id="flash"></div>
-    <div id="msg"><div id="msgTxt"></div><button class="chip on" id="camAsk">Nyalakan kamera</button></div>
+    <div id="cd"></div>
+    <div id="msg"><div id="msgTxt"></div><button class="chip on" id="camAsk">Turn on camera</button></div>
   </div>
 
   <div class="lenses" id="lenses"></div>
@@ -99,30 +138,38 @@
   </div>
 
   <div class="keys">
-    <button class="soft" id="openGal" aria-label="Galeri"><span id="thumbTxt">Galeri</span></button>
-    <button class="shutter" id="shot" aria-label="Ambil foto"><b></b></button>
+    <button class="soft" id="openGal" aria-label="Gallery"><span id="thumbTxt">Gallery</span></button>
+    <button class="shutter" id="shot" aria-label="Take photo"><b></b></button>
     <div style="display:flex;flex-direction:column;gap:6px">
-      <button class="soft" id="flip" style="height:24px;font-size:20px">Putar</button>
+      <button class="soft" id="flip" style="height:24px;font-size:20px">Flip</button>
       <button class="soft" id="menuBtn" style="height:24px;font-size:20px">Menu</button>
     </div>
   </div>
 
   <div id="menu"><div class="sheet">
-    <h3>PENGATURAN</h3>
-    <label>Mode</label><div class="row" id="modeRow"><button class="chip on" data-m="photo">FOTO</button><button class="chip" data-m="video">VIDEO</button></div>
-    <label>Izin perangkat</label><div class="row"><button class="chip" id="camToggle"></button><button class="chip" id="micToggle"></button></div><div id="permNote" style="font-size:18px;opacity:.75;margin-top:4px"></div>
+    <h3>SETTINGS</h3>
+    <label>Mode</label><div class="row" id="modeRow"><button class="chip on" data-m="photo">PHOTO</button><button class="chip" data-m="video">VIDEO</button></div>
+    <label>Timer</label><div class="row" id="timerRow"><button class="chip on" data-t="0">OFF</button><button class="chip" data-t="5">5 SEC</button><button class="chip" data-t="10">10 SEC</button></div>
+    <label>Permissions</label><div class="row"><button class="chip" id="camToggle"></button><button class="chip" id="micToggle"></button></div><div id="permNote" style="font-size:18px;opacity:.75;margin-top:4px"></div>
     <label>Format</label><div class="row" id="fmtRow"></div>
-    <label>Kecerahan <span id="briTxt">0</span></label><input type="range" id="bri" min="-60" max="60" step="5" value="0">
-    <label>Stempel tanggal</label><div class="row"><button class="chip on" id="stampBtn">NYALA</button></div>
-    <button class="chip" id="closeMenu" style="margin-top:14px;width:100%">Selesai</button>
+    <label>Brightness <span id="briTxt">0</span></label><input type="range" id="bri" min="-60" max="60" step="5" value="0">
+    <label>Date stamp</label><div class="row"><button class="chip on" id="stampBtn">ON</button></div>
+    <label>Camera theme</label><div class="row" id="themeRow"></div>
+    <button class="chip" id="closeMenu" style="margin-top:14px;width:100%">Done</button>
   </div></div>
   <div id="gal">
-    <div class="ghead"><span>GALERI</span><button id="closeGal" style="color:var(--lcd);font-size:26px">Kembali</button></div>
+    <div class="ghead"><span>GALLERY</span><button id="closeGal" style="color:var(--lcd);font-size:26px">Back</button></div>
     <div class="grid" id="grid"></div>
   </div>
+  <div id="tpl">
+    <div class="ghead"><span>CHOOSE A TEMPLATE</span></div>
+    <div class="tplwrap"><canvas id="tplCv" width="300" height="400"></canvas></div>
+    <div class="tplrow" id="tplRow"></div>
+    <div class="vbar"><button id="tplSave">Save</button><button class="del" id="tplCancel">Discard</button></div>
+  </div>
   <div id="view">
-    <img id="viewImg" alt="Foto"><video id="viewVid" controls playsinline style="display:none;flex:1;min-height:0;width:100%;background:#000"></video>
-    <div class="vbar"><button id="share">Bagikan</button><button id="dl">Simpan</button><button class="del" id="del">Hapus</button><button id="closeView">Tutup</button></div>
+    <img id="viewImg" alt="Photo"><video id="viewVid" controls playsinline style="display:none;flex:1;min-height:0;width:100%;background:#000"></video>
+    <div class="vbar"><button id="share">Share</button><button id="dl">Save</button><button class="del" id="del">Delete</button><button id="closeView">Close</button></div>
   </div>
 </div>
 
@@ -149,6 +196,25 @@ Object.assign(LENS.vga,      { bloom:.12 });
 Object.assign(LENS.polaroid, { bloom:.28, hal:.30, leak:.35, dust:1, frame:1 });
 Object.assign(LENS.bw,       { bloom:.15, dust:1 });
 LENS.dreamy = { name:'DREAMY', sat:1.05, con:.88, bri:18, mul:[1.07,1,1.08], add:[16,6,20], fade:.20, grain:18, vig:.40, bloom:.55, hal:.55, leak:.50, dust:1 };
+delete LENS.nokia; // diganti varian Nokia lawas (non-hijau)
+Object.assign(LENS, {
+  fuji400:  { name:'FUJI 400',  sat:1.22, con:1.10, bri:4,  mul:[.97,1.04,1.02], add:[-2,6,3],   fade:.08, grain:28, vig:.40, bloom:.12, leak:.12, dust:1 },
+  velvia:   { name:'VELVIA',    sat:1.65, con:1.28, bri:0,  mul:[1.04,1,.95],     add:[4,0,-4],   fade:.02, grain:18, vig:.50, bloom:.10, dust:1 },
+  fujic200: { name:'FUJI C200', sat:.95,  con:1.05, bri:8,  mul:[.94,1.03,1.08],  add:[-4,8,12],  fade:.14, grain:30, vig:.38, bloom:.15, hal:.10, leak:.20, dust:1 },
+  agfa:     { name:'AGFA',      sat:1.10, con:1.08, bri:2,  mul:[1.1,1,.86],      add:[14,2,-8],  fade:.16, grain:32, vig:.50, bloom:.14, hal:.30, leak:.28, dust:1 },
+  lomo:     { name:'LOMO',      sat:1.50, con:1.35, bri:-4, mul:[1.08,1.04,.92],  add:[8,-2,6],   fade:.05, grain:36, vig:.95, leak:.20, dust:1 },
+  trix:     { name:'TRI-X',     sat:0,    con:1.55, bri:-6, mul:[1,1,1],          add:[0,0,0],    fade:.05, grain:60, vig:.60, dust:1 },
+  digicam:  { name:'DIGICAM 2002', lw:320, sat:1.15, con:1.18, bri:14, mul:[1,1,1.08], add:[0,0,6],  fade:.04, grain:16, vig:.15, bloom:.20 },
+  nokia03:  { name:'NOKIA 2003', lw:128, post:5, grid:1, gridc:'rgba(10,20,40,.18)', sat:1.35, con:1.2, bri:6, mul:[1,1.03,1.1], add:[0,4,10], fade:.06, grain:14, vig:.2 },
+  nokia00:  { name:'NOKIA 2000', lw:96, pal:[[24,30,44],[72,86,116],[132,150,180],[196,212,232]], con:1.3, grain:10, gridc:'rgba(10,16,30,.2)', ink:'#0c1424' },
+  nokia80:  { name:'NOKIA 1980', lw:64, pal:[[22,8,0],[96,42,0],[196,104,6],[255,184,48]], con:1.35, grain:12, gridc:'rgba(40,12,0,.22)', ink:'#2a0e00' },
+  bbpearl:  { name:'BB PEARL',  lw:160, post:40, sat:.88, con:1.15, bri:6,  mul:[1,1.03,1.06], add:[0,4,8], fade:.12, grain:30, vig:.30 },
+  bbcurve:  { name:'BB CURVE',  lw:240, post:56, sat:.78, con:1.22, bri:12, mul:[1.02,1,1.06], add:[2,2,8], fade:.10, grain:34, vig:.35, bloom:.10 },
+  super8:   { name:'SUPER 8',   lw:280, sat:1.1, con:1.12, bri:8, mul:[1.1,1,.84], add:[14,4,-10], fade:.20, grain:46, vig:.70, bloom:.20, hal:.35, leak:.35, dust:1 }
+});
+const LENS_ORDER = ['kodak','fuji400','velvia','fujic200','agfa','lomo','dispo','polaroid','dreamy','bw','trix','vga','digicam','nokia03','nokia00','nokia80','bbpearl','bbcurve','vhs','super8'];
+Object.keys(LENS).forEach(k => { if (!LENS_ORDER.includes(k)) LENS_ORDER.push(k); });
+let timerSec = 0, cdTimer = null, tplKey = 'none';
 
 let seed = Math.random() * 1e9 | 0;
 const rnd = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
@@ -196,8 +262,8 @@ const ls = { get: k => { try { return localStorage.getItem(k); } catch (_) { ret
 let camActive = false, micPref = ls.get('rc_mic'); // micPref: '1' nyala, '0' mati, null = belum pernah ditanya
 function syncPerm() {
   const c = $('#camToggle'), m = $('#micToggle');
-  c.textContent = 'KAMERA: ' + (camActive ? 'NYALA' : 'MATI'); c.classList.toggle('on', camActive);
-  m.textContent = 'MIKROFON: ' + (micPref === '1' ? 'NYALA' : 'MATI'); m.classList.toggle('on', micPref === '1');
+  c.textContent = 'CAMERA: ' + (camActive ? 'ON' : 'OFF'); c.classList.toggle('on', camActive);
+  m.textContent = 'MIC: ' + (micPref === '1' ? 'ON' : 'OFF'); m.classList.toggle('on', micPref === '1');
 }
 function showMsg(t) { $('#msgTxt').textContent = t; $('#msg').style.display = 'flex'; }
 async function askMic() { // memunculkan dialog izin mikrofon
@@ -209,10 +275,10 @@ function stopCam() {
   if (rec) rec.stop();
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null; video.srcObject = null; camActive = false; ls.set('rc_cam', '0');
-  showMsg('Kamera dimatikan.'); syncPerm();
+  showMsg('Camera is off.'); syncPerm();
 }
 function dims(long) { const [a, b] = FMT[fmt]; return a <= b ? [Math.round(long * a / b), long] : [long, Math.round(long * b / a)]; }
-function hud() { $('#lensName').textContent = `${LENS[lens].name} · ${fmt}${mode === 'video' ? ' · VID' : ''}`; }
+function hud() { $('#lensName').textContent = `${LENS[lens].name} · ${fmt}${mode === 'video' ? ' · VID' : ''}${timerSec ? ' · ' + timerSec + 'S' : ''}`; }
 function applyFormat() { const [w, h] = dims(mode === 'video' ? 480 : 400); cv.width = w; cv.height = h; hud(); }
 
 // ===== Render satu frame dengan efek lens =====
@@ -252,14 +318,15 @@ function render(ctx, W, H) {
     const n = (Math.random() - .5) * L.grain;
     let sc = 1; if (L.scan && ((p / w) | 0) % 3 === 0) sc = .82;
     d[i] = (r * vg + n) * sc; d[i+1] = (g * vg + n) * sc; d[i+2] = (b * vg + n) * sc;
+    if (L.post) { const q = 255 / (L.post - 1); d[i] = Math.round(d[i] / q) * q; d[i+1] = Math.round(d[i+1] / q) * q; d[i+2] = Math.round(d[i+2] / q) * q; }
   }
   tx.putImageData(im, 0, 0);
 
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(tmp, 0, 0, W, H);
 
-  if (L.pal) { // garis kisi LCD Nokia
-    ctx.fillStyle = 'rgba(20,32,10,.18)';
+  if (L.pal || L.grid) { // garis kisi LCD Nokia
+    ctx.fillStyle = L.gridc || 'rgba(20,32,10,.18)';
     const step = W / w;
     for (let x = 0; x < W; x += step) ctx.fillRect(x, 0, 1, H);
     for (let y = 0; y < H; y += step) ctx.fillRect(0, y, W, 1);
@@ -289,7 +356,7 @@ function drawStamp(ctx, W, H, L) {
   ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
   const x = W - fs * 0.7, y = H - fs * 0.8;
   ctx.shadowColor = L.pal ? 'transparent' : 'rgba(255,90,0,.9)'; ctx.shadowBlur = fs * 0.35;
-  ctx.fillStyle = L.pal ? '#1b2a0c' : '#ff8a1f';
+  ctx.fillStyle = L.pal ? (L.ink || '#1b2a0c') : '#ff8a1f';
   ctx.fillText(stampText(), x, y);
   ctx.restore();
 }
@@ -297,7 +364,7 @@ function drawStamp(ctx, W, H, L) {
 // ===== Loop pratinjau (dibatasi fps agar terasa jadul) =====
 function loop(t) {
   requestAnimationFrame(loop);
-  const gap = mode === 'video' ? 30 : (lens === 'nokia' ? 90 : 55);
+  const gap = mode === 'video' ? 30 : (LENS[lens].pal ? 90 : 55);
   if (t - last < gap) return;
   last = t;
   render(cx, cv.width, cv.height);
@@ -318,7 +385,7 @@ async function startCam() {
     msg.style.display = 'none'; camActive = true; ls.set('rc_cam', '1'); syncPerm();
   } catch (e) {
     msg.style.display = 'flex';
-    camActive = false; syncPerm(); $('#msgTxt').textContent = 'Kamera belum aktif. Izinkan akses kamera di dialog browser (butuh HTTPS atau localhost).';
+    camActive = false; syncPerm(); $('#msgTxt').textContent = 'Camera is not active yet. Allow camera access in the browser prompt (requires HTTPS or localhost).';
   }
 }
 
@@ -339,7 +406,7 @@ $('#lcd').addEventListener('touchend', () => { pd = 0; });
 
 // ===== Pilih lens =====
 const lensBox = $('#lenses');
-Object.keys(LENS).forEach(k => {
+LENS_ORDER.forEach(k => {
   const b = document.createElement('button');
   b.className = 'chip' + (k === lens ? ' on' : ''); b.textContent = LENS[k].name; b.dataset.k = k;
   b.onclick = () => {
@@ -350,7 +417,7 @@ Object.keys(LENS).forEach(k => {
 });
 
 $('#flip').onclick = () => { facing = facing === 'user' ? 'environment' : 'user'; startCam(); };
-$('#stampBtn').onclick = () => { stampOn = !stampOn; $('#stampBtnTxt').textContent = stampOn ? 'DATE ON' : 'DATE OFF'; $('#stampBtn').textContent = stampOn ? 'NYALA' : 'MATI'; $('#stampBtn').classList.toggle('on', stampOn); };
+$('#stampBtn').onclick = () => { stampOn = !stampOn; $('#stampBtnTxt').textContent = stampOn ? 'DATE ON' : 'DATE OFF'; $('#stampBtn').textContent = stampOn ? 'ON' : 'OFF'; $('#stampBtn').classList.toggle('on', stampOn); };
 
 // ===== Galeri (IndexedDB) =====
 let db;
@@ -375,17 +442,27 @@ function showView(u, isV) {
 async function refreshGallery() {
   urls.forEach(URL.revokeObjectURL); urls = [];
   const list = await allPhotos();
-  $('#count').textContent = list.length + ' item';
+  $('#count').textContent = list.length + (list.length === 1 ? ' item' : ' items');
   const th = $('#openGal');
   if (list[0]) { const u = URL.createObjectURL(list[0].blob); urls.push(u); th.innerHTML = list[0].type === 'video' ? `<video src="${u}" muted playsinline></video>` : `<img src="${u}" alt="">`; }
-  else th.innerHTML = '<span>Galeri</span>';
+  else th.innerHTML = '<span>Gallery</span>';
   const grid = $('#grid'); grid.innerHTML = '';
-  if (!list.length) { grid.innerHTML = '<div class="empty">Belum ada foto.<br>Ambil foto pertamamu.</div>'; return; }
+  if (!list.length) { grid.innerHTML = '<div class="empty">No photos yet.<br>Take your first shot.</div>'; return; }
   list.forEach(p => {
     const u = URL.createObjectURL(p.blob); urls.push(u);
-    const isV = p.type === 'video'; const im = document.createElement(isV ? 'video' : 'img'); im.src = u; im.alt = 'Foto ' + p.date; if (isV) { im.muted = true; im.preload = 'metadata'; im.playsInline = true; } else im.loading = 'lazy';
-    im.onclick = () => { curId = p.id; curUrl = u; curVid = isV; curMime = p.blob.type || (isV ? 'video/webm' : 'image/jpeg'); curExt = isV ? (curMime.includes('mp4') ? 'mp4' : 'webm') : 'jpg'; showView(u, isV); };
-    grid.appendChild(im);
+    const isV = p.type === 'video';
+    const card = document.createElement('div'); card.className = 'card'; card.tabIndex = 0;
+    const ph = document.createElement('div'); ph.className = 'ph';
+    const im = document.createElement(isV ? 'video' : 'img'); im.src = u; im.alt = 'Photo ' + p.date;
+    if (isV) { im.muted = true; im.preload = 'metadata'; im.playsInline = true; } else im.loading = 'lazy';
+    ph.appendChild(im);
+    if (isV) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = '> VID'; ph.appendChild(t); }
+    const cap = document.createElement('div'); cap.className = 'cap'; cap.innerHTML = '<b></b><span></span>';
+    cap.firstChild.textContent = (LENS[p.lens] || { name: String(p.lens || 'RETRO').toUpperCase() }).name; cap.lastChild.textContent = p.date;
+    card.append(ph, cap);
+    const open = () => { curId = p.id; curUrl = u; curVid = isV; curMime = p.blob.type || (isV ? 'video/webm' : 'image/jpeg'); curExt = isV ? (curMime.includes('mp4') ? 'mp4' : 'webm') : 'jpg'; showView(u, isV); };
+    card.onclick = open; card.onkeydown = e => { if (e.key === 'Enter') open(); };
+    grid.appendChild(card);
   });
 }
 $('#openGal').onclick = () => { refreshGallery(); $('#gal').classList.add('open'); };
@@ -398,10 +475,10 @@ $('#share').onclick = async () => {
     const blob = await (await fetch(curUrl)).blob();
     const file = new File([blob], `retro-cam-${curId}.${curExt}`, { type: curMime });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'Retro Cam', text: 'Dijepret pakai Retro Cam 📷' });
+      await navigator.share({ files: [file], title: 'Retro Cam', text: 'Shot with Retro Cam 📷' });
     } else {
       $('#dl').click(); // browser belum mendukung berbagi file (mis. desktop): unduh saja
-      btn.textContent = 'Terunduh'; setTimeout(() => btn.textContent = 'Bagikan', 1800);
+      btn.textContent = 'Downloaded'; setTimeout(() => btn.textContent = 'Share', 1800);
     }
   } catch (e) { /* dibatalkan pengguna */ }
 };
@@ -431,7 +508,7 @@ let recTimer = 0, chunks = [], recStart = 0;
 async function toggleRec() {
   if (rec) { rec.stop(); return; }
   if (!video.videoWidth) return;
-  if (!window.MediaRecorder) { $('#msg').style.display = 'flex'; $('#msgTxt').textContent = 'Browser ini belum mendukung rekam video.'; return; }
+  if (!window.MediaRecorder) { $('#msg').style.display = 'flex'; $('#msgTxt').textContent = 'This browser does not support video recording.'; return; }
   const types = ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
   const mime = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
   const out = cv.captureStream(30); let mic = null;
@@ -450,7 +527,7 @@ async function toggleRec() {
   rec.start(1000); beep(); recStart = Date.now(); $('#shot').classList.add('rec');
   recTimer = setInterval(() => { const t = (Date.now() - recStart) / 1000 | 0; $('#count').textContent = '● ' + String(t / 60 | 0).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }, 500);
 }
-$('#shot').onclick = async () => {
+const doShot = async () => {
   if (!rec && !video.videoWidth) { startCam(); return; } // pertama kali: munculkan dialog izin kamera
   if (mode === 'video') return toggleRec();
   if (!video.videoWidth) return;
@@ -459,13 +536,7 @@ $('#shot').onclick = async () => {
   seed = Math.random() * 1e9 | 0; // posisi light leak & debu unik tiap foto
   const c = document.createElement('canvas'); const [cw, ch] = dims(1200); c.width = cw; c.height = ch;
   render(c.getContext('2d'), c.width, c.height);
-  c.toBlob(async blob => {
-    const u = URL.createObjectURL(blob), dv = $('#dev');
-    dv.src = u; dv.classList.remove('go'); void dv.offsetWidth; dv.classList.add('go');
-    setTimeout(() => URL.revokeObjectURL(u), 4500);
-    await addPhoto({ blob, lens, date: stampText(), ts: Date.now() });
-    refreshGallery();
-  }, 'image/jpeg', .9);
+  openTpl(c); // pilih template dulu sebelum masuk galeri
 };
 
 // ===== Menu pengaturan =====
@@ -485,21 +556,160 @@ modeRow.querySelectorAll('.chip').forEach(b => b.onclick = () => {
 });
 $('#camToggle').onclick = () => camActive ? stopCam() : startCam();
 $('#micToggle').onclick = async () => {
-  if (micPref === '1') { micPref = '0'; ls.set('rc_mic', '0'); syncPerm(); $('#permNote').textContent = 'Video direkam tanpa suara.'; return; }
+  if (micPref === '1') { micPref = '0'; ls.set('rc_mic', '0'); syncPerm(); $('#permNote').textContent = 'Video will be recorded without sound.'; return; }
   const ok = await askMic();
-  $('#permNote').textContent = ok ? 'Mikrofon aktif: video direkam dengan suara.' : 'Mikrofon ditolak. Izinkan lewat pengaturan situs di browser.';
+  $('#permNote').textContent = ok ? 'Microphone on: video will be recorded with sound.' : 'Microphone denied. Allow it in your browser site settings.';
 };
 $('#camAsk').onclick = () => startCam();
 $('#bri').oninput = e => { userBri = +e.target.value; $('#briTxt').textContent = (userBri > 0 ? '+' : '') + userBri; };
+
+// ===== Timer =====
+function cancelCd() { clearInterval(cdTimer); cdTimer = null; $('#cd').style.display = 'none'; }
+function startCd(sec, done) {
+  const el = $('#cd'); let n = sec; el.style.display = 'flex'; el.textContent = n; beep();
+  cdTimer = setInterval(() => {
+    n--;
+    if (n <= 0) { cancelCd(); done(); } else { el.textContent = n; beep(); }
+  }, 1000);
+}
+$('#shot').onclick = () => {
+  if (cdTimer) { cancelCd(); return; }                       // ketuk lagi = batalkan timer
+  if (rec || !video.videoWidth || !timerSec) return doShot(); // stop rekam / minta izin / tanpa timer
+  menu.classList.remove('open');
+  startCd(timerSec, doShot);
+};
+const timerRow = $('#timerRow');
+timerSec = +ls.get('rc_timer') || 0;
+timerRow.querySelectorAll('.chip').forEach(b => {
+  b.classList.toggle('on', +b.dataset.t === timerSec);
+  b.onclick = () => { timerSec = +b.dataset.t; ls.set('rc_timer', timerSec); timerRow.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); hud(); };
+});
+
+// ===== Template cetak (sebelum masuk galeri) =====
+const TPL = { none:'ORIGINAL', polaroid:'POLAROID', instant:'INSTANT', film:'FILM 35MM', postcard:'POSTCARD', camcorder:'CAMCORDER' };
+tplKey = ls.get('rc_tpl'); if (!TPL[tplKey]) tplKey = 'none';
+function rrect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function tplMake(src, key, meta) {
+  if (key === 'none') return src;
+  const W = src.width, H = src.height, k = W / 1200;
+  const o = document.createElement('canvas'), g = o.getContext('2d');
+  const nm = (LENS[meta.lens] || { name: 'RETRO' }).name, d = new Date(meta.ts), p2 = n => String(n).padStart(2, '0');
+  const txt = (t, x, y, font, col, al) => { g.font = font; g.fillStyle = col; g.textAlign = al || 'left'; g.textBaseline = 'alphabetic'; g.fillText(t, x, y); };
+  g.imageSmoothingQuality = 'high';
+  if (key === 'polaroid') {
+    const p = W * .07, b = W * .26; o.width = Math.round(W + 2 * p); o.height = Math.round(H + p + b);
+    const bg = g.createLinearGradient(0, 0, 0, o.height); bg.addColorStop(0, '#f7f2e4'); bg.addColorStop(1, '#e9e1cc');
+    g.fillStyle = bg; g.fillRect(0, 0, o.width, o.height);
+    g.drawImage(src, p, p);
+    g.strokeStyle = 'rgba(0,0,0,.28)'; g.lineWidth = 2 * k; g.strokeRect(p, p, W, H);
+    txt(meta.date, o.width / 2, H + p + b * .62, `600 ${W * .085}px 'Caveat', cursive`, '#3b3a36', 'center');
+  } else if (key === 'instant') {
+    const p = W * .09, b = W * .34; o.width = Math.round(W + 2 * p); o.height = Math.round(H + p + b);
+    g.fillStyle = '#fcfbf7'; g.fillRect(0, 0, o.width, o.height);
+    g.drawImage(src, p, p);
+    ['#e8453c', '#f28c28', '#f6d02f', '#4caf50', '#2f7fd1'].forEach((c, i) => { g.fillStyle = c; g.fillRect(p + i * W * .1, H + p + b * .16, W * .1, W * .02); });
+    txt('INSTANT FILM', p, H + p + b * .58, `${W * .05}px 'VT323', monospace`, '#8a8578');
+    txt(meta.date, o.width - p, H + p + b * .62, `600 ${W * .075}px 'Caveat', cursive`, '#3b3a36', 'right');
+    txt(nm, p, H + p + b * .82, `${W * .045}px 'VT323', monospace`, '#a39d8d');
+  } else if (key === 'film') {
+    const bar = W * .15, side = W * .04; o.width = Math.round(W + 2 * side); o.height = Math.round(H + 2 * bar);
+    g.fillStyle = '#1d130b'; g.fillRect(0, 0, o.width, o.height);
+    g.drawImage(src, side, bar);
+    const hw = W * .045, hh = W * .034, step = W * .075;
+    g.fillStyle = '#e9ddbf';
+    for (let x = step * .35; x < o.width - hw; x += step) { rrect(g, x, bar * .12, hw, hh, 3 * k); g.fill(); rrect(g, x, o.height - bar * .12 - hh, hw, hh, 3 * k); g.fill(); }
+    const f = `${W * .04}px 'VT323', monospace`, amber = '#f0a43a';
+    txt('400TX   > 12   > 12A', side, bar * .12 + hh + (bar * .88 - hh) * .8, f, amber);
+    txt(nm, side, o.height - bar + (bar * .88 - hh) * .7, f, amber);
+    txt('12A  >', o.width - side, o.height - bar + (bar * .88 - hh) * .7, f, amber, 'right');
+  } else if (key === 'postcard') {
+    const m = W * .06, top = W * .2, bot = W * .17; o.width = Math.round(W + 2 * m); o.height = Math.round(H + top + bot);
+    g.fillStyle = '#efe3c4'; g.fillRect(0, 0, o.width, o.height);
+    g.fillStyle = 'rgba(120,90,50,.06)'; for (let y = 0; y < o.height; y += 7 * k) g.fillRect(0, y, o.width, k);
+    const q = W * .025; g.save(); g.translate(m + W / 2, top + H / 2); g.rotate(-.012);
+    g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 14 * k; g.shadowOffsetY = 6 * k;
+    g.fillStyle = '#fffdf6'; g.fillRect(-W / 2 - q, -H / 2 - q, W + 2 * q, H + 2 * q);
+    g.shadowColor = 'transparent'; g.drawImage(src, -W / 2, -H / 2); g.restore();
+    const sw = W * .13, sh = W * .15, sx = o.width - m - sw, sy = W * .03;
+    g.fillStyle = '#fffdf6'; g.fillRect(sx, sy, sw, sh);
+    g.fillStyle = '#d9523a'; g.fillRect(sx + sw * .1, sy + sh * .08, sw * .8, sh * .84);
+    g.setLineDash([5 * k, 5 * k]); g.strokeStyle = '#b8ad90'; g.lineWidth = 2 * k; g.strokeRect(sx, sy, sw, sh); g.setLineDash([]);
+    txt('RC', sx + sw / 2, sy + sh * .62, `${W * .075}px 'VT323', monospace`, '#fff', 'center');
+    const cx = sx - W * .05, cy = sy + sh * .55, r = W * .065;
+    g.strokeStyle = 'rgba(70,50,40,.55)'; g.lineWidth = 3 * k; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.stroke();
+    for (let i = -1; i <= 1; i++) { g.beginPath(); g.moveTo(cx - r - W * .16, cy + i * W * .02); g.lineTo(cx - r, cy + i * W * .02); g.stroke(); }
+    txt(`${p2(d.getDate())}.${p2(d.getMonth() + 1)}`, cx, cy + W * .012, `${W * .04}px 'VT323', monospace`, 'rgba(70,50,40,.7)', 'center');
+    txt('WISH YOU WERE HERE', o.width / 2, H + top + bot * .5, `${W * .05}px 'Special Elite', serif`, '#6b4a3a', 'center');
+    txt(`${nm} - ${meta.date}`, o.width / 2, H + top + bot * .8, `${W * .04}px 'VT323', monospace`, '#8b6f5a', 'center');
+  } else if (key === 'camcorder') {
+    o.width = W; o.height = H; g.drawImage(src, 0, 0);
+    const m = W * .07, fs = W * .06, L = W * .06, f = `${fs}px 'VT323', monospace`;
+    g.shadowColor = 'rgba(0,0,0,.85)'; g.shadowBlur = 4 * k; g.shadowOffsetX = g.shadowOffsetY = 2 * k;
+    g.strokeStyle = '#fff'; g.lineWidth = 4 * k;
+    [[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]].forEach(([x, y, sx, sy]) => { g.beginPath(); g.moveTo(x, y + sy * L); g.lineTo(x, y); g.lineTo(x + sx * L, y); g.stroke(); });
+    g.fillStyle = '#e8281c'; g.beginPath(); g.arc(m + W * .05, m + W * .085, W * .018, 0, 7); g.fill();
+    txt('REC', m + W * .085, m + W * .105, f, '#fff');
+    txt('SP  0:00:' + p2(d.getSeconds()), m + W * .02, H - m - W * .09, f, '#fff');
+    txt('PLAY', m + W * .02, H - m - W * .03, f, '#fff');
+    const bx = W - m - W * .13, by = m + W * .06; g.lineWidth = 3 * k; g.strokeRect(bx, by, W * .09, W * .045); g.fillStyle = '#fff'; g.fillRect(bx + W * .09, by + W * .013, W * .01, W * .019);
+    for (let i = 0; i < 3; i++) g.fillRect(bx + W * .008 + i * W * .027, by + W * .008, W * .021, W * .029);
+    txt(`${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`, W - m - W * .02, H - m - W * .09, f, '#fff', 'right');
+    txt(`${p2(d.getHours())}:${p2(d.getMinutes())}`, W - m - W * .02, H - m - W * .03, f, '#fff', 'right');
+  }
+  return o;
+}
+let pend = null, pendOut = null;
+const tplRow = $('#tplRow');
+Object.keys(TPL).forEach(k => {
+  const b = document.createElement('button'); b.className = 'chip'; b.textContent = TPL[k]; b.dataset.k = k;
+  b.onclick = () => { tplKey = k; ls.set('rc_tpl', k); drawTpl(); };
+  tplRow.appendChild(b);
+});
+function drawTpl() {
+  pendOut = tplMake(pend.c, tplKey, pend);
+  const pv = $('#tplCv'), sc = Math.min(1, 700 / pendOut.width);
+  pv.width = Math.round(pendOut.width * sc); pv.height = Math.round(pendOut.height * sc);
+  const g = pv.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(pendOut, 0, 0, pv.width, pv.height);
+  tplRow.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.k === tplKey));
+}
+function openTpl(c) { pend = { c, lens, date: stampText(), ts: Date.now() }; drawTpl(); $('#tpl').classList.add('open'); }
+$('#tplSave').onclick = () => {
+  if (!pend) return;
+  const P = pend, out = pendOut, key = tplKey; pend = null; $('#tpl').classList.remove('open');
+  out.toBlob(async blob => {
+    const u = URL.createObjectURL(blob), dv = $('#dev');
+    dv.src = u; dv.classList.remove('go'); void dv.offsetWidth; dv.classList.add('go');
+    setTimeout(() => URL.revokeObjectURL(u), 4500);
+    await addPhoto({ blob, lens: P.lens, date: P.date, ts: P.ts, tpl: key });
+    refreshGallery();
+  }, 'image/jpeg', .92);
+};
+$('#tplCancel').onclick = () => { pend = null; $('#tpl').classList.remove('open'); };
+
+// ===== Tema kamera =====
+const THEMES = { cream:['CREAM', '#e6dcc3'], blue:['BLUE', '#a9c6e8'], black:['BLACK', '#2a2a2d'], pink:['PINK', '#f3b6d0'], mint:['MINT', '#a9d8c3'], silver:['SILVER', '#c3cad4'] };
+const themeRow = $('#themeRow');
+function setTheme(k) {
+  if (!THEMES[k]) k = 'cream';
+  document.documentElement.dataset.theme = k; ls.set('rc_theme', k);
+  themeRow.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.k === k));
+  const mt = document.querySelector('meta[name=theme-color]'); if (mt) mt.content = THEMES[k][1];
+}
+Object.keys(THEMES).forEach(k => {
+  const b = document.createElement('button'); b.className = 'chip'; b.dataset.k = k;
+  b.innerHTML = '<i class="sw"></i>'; b.firstChild.style.background = THEMES[k][1]; b.append(THEMES[k][0]);
+  b.onclick = () => setTheme(k); themeRow.appendChild(b);
+});
+setTheme(ls.get('rc_theme') || 'cream');
 
 // ===== Jam status & start =====
 setInterval(() => { const t = new Date(); $('#clock').textContent = String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0'); }, 1000);
 (async () => {
   $('#clock').textContent = new Date().toTimeString().slice(0, 5);
   await openDB(); await refreshGallery();
-  if (document.fonts) await Promise.all([document.fonts.load("20px 'VT323'"), document.fonts.load("600 20px 'Caveat'")]);
+  if (document.fonts) await Promise.all([document.fonts.load("20px 'VT323'"), document.fonts.load("600 20px 'Caveat'"), document.fonts.load("20px 'Special Elite'")]);
   applyFormat(); syncPerm(); requestAnimationFrame(loop);
-  if (ls.get('rc_cam') === '1') await startCam(); else showMsg('Izinkan akses kamera untuk mulai memotret.');
+  if (ls.get('rc_cam') === '1') await startCam(); else showMsg('Allow camera access to start shooting.');
 })();
 </script>
 <script src="/js/pwa.js" defer></script>
