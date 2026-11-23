@@ -151,6 +151,7 @@ html[data-theme=silver]{--body:#e4e7ec;--body2:#aeb6c1;--key:#4a5361;--lcd:#5aa6
     <label>Mode</label><div class="row" id="modeRow"><button class="chip on" data-m="photo">PHOTO</button><button class="chip" data-m="video">VIDEO</button></div>
     <label>Timer</label><div class="row" id="timerRow"><button class="chip on" data-t="0">OFF</button><button class="chip" data-t="5">5 SEC</button><button class="chip" data-t="10">10 SEC</button></div>
     <label>Permissions</label><div class="row"><button class="chip" id="camToggle"></button><button class="chip" id="micToggle"></button></div><div id="permNote" style="font-size:18px;opacity:.75;margin-top:4px"></div>
+    <label>Flash</label><div class="row"><button class="chip" id="flashBtn">FLASH: OFF</button></div><div id="flashNote" style="font-size:18px;opacity:.75;margin-top:4px"></div>
     <label>Format</label><div class="row" id="fmtRow"></div>
     <label>Brightness <span id="briTxt">0</span></label><input type="range" id="bri" min="-60" max="60" step="5" value="0">
     <label>Date stamp</label><div class="row"><button class="chip on" id="stampBtn">ON</button></div>
@@ -262,6 +263,7 @@ let lens = 'kodak', zoom = 1, facing = 'environment', stampOn = true, stream = n
 const FMT = { '3:4':[3,4], '4:5':[4,5], '1:1':[1,1], '9:16':[9,16], '4:3':[4,3], '16:9':[16,9] };
 let mode = 'photo', fmt = '3:4', userBri = 0, rec = null;
 const ls = { get: k => { try { return localStorage.getItem(k); } catch (_) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} } };
+let flashOn = ls.get('rc_flash') === '1';
 let camActive = false, micPref = ls.get('rc_mic'); // micPref: '1' nyala, '0' mati, null = belum pernah ditanya
 function syncPerm() {
   const c = $('#camToggle'), m = $('#micToggle');
@@ -281,7 +283,7 @@ function stopCam() {
   showMsg('Camera is off.'); syncPerm();
 }
 function dims(long) { const [a, b] = FMT[fmt]; return a <= b ? [Math.round(long * a / b), long] : [long, Math.round(long * b / a)]; }
-function hud() { $('#lensName').textContent = `${LENS[lens].name} · ${fmt}${mode === 'video' ? ' · VID' : ''}${timerSec ? ' · ' + timerSec + 'S' : ''}`; }
+function hud() { $('#lensName').textContent = `${LENS[lens].name} · ${fmt}${mode === 'video' ? ' · VID' : ''}${flashOn ? ' · FLASH' : ''}${timerSec ? ' · ' + timerSec + 'S' : ''}`; }
 function applyFormat() { const [w, h] = dims(mode === 'video' ? 480 : 400); cv.width = w; cv.height = h; hud(); }
 
 // ===== Render satu frame dengan efek lens =====
@@ -392,6 +394,27 @@ function loop(t) {
   if (rec && vcOn) drawVidTpl();
 }
 
+// ===== Flash (torch kamera belakang; layar putih jika torch tidak tersedia, mis. kamera depan/iOS) =====
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const sflash = document.createElement('div');
+sflash.style.cssText = 'position:fixed;inset:0;z-index:1000;background:#fff;opacity:0;pointer-events:none;transition:opacity .05s';
+document.body.appendChild(sflash);
+function vTrack() { return stream && stream.getVideoTracks()[0]; }
+function torchOK() { const t = vTrack(); try { return !!(t && t.getCapabilities && t.getCapabilities().torch); } catch (_) { return false; } }
+async function setTorch(on) { const t = vTrack(); if (!t || !torchOK()) return false; try { await t.applyConstraints({ advanced: [{ torch: !!on }] }); return true; } catch (_) { return false; } }
+function syncFlash() {
+  const b = $('#flashBtn'); if (!b) return;
+  b.textContent = 'FLASH: ' + (flashOn ? 'ON' : 'OFF'); b.classList.toggle('on', flashOn);
+  $('#flashNote').textContent = flashOn ? (torchOK() ? 'Uses the phone flashlight (also lit while recording video).' : 'This camera has no flashlight: the screen lights up white for photos.') : '';
+  hud();
+}
+async function fireFlash() {
+  if (!flashOn) return;
+  if (torchOK()) { await setTorch(true); await sleep(380); }
+  else { sflash.style.opacity = '1'; await sleep(260); }
+}
+function endFlash() { sflash.style.opacity = '0'; if (torchOK()) setTorch(false); }
+
 // ===== Kamera =====
 async function startCam() {
   const msg = $('#msg');
@@ -404,7 +427,7 @@ async function startCam() {
     const fm = stream.getVideoTracks()[0].getSettings().facingMode;
     mirror = fm ? fm !== 'environment' : true;
     video.srcObject = stream; await video.play();
-    msg.style.display = 'none'; camActive = true; ls.set('rc_cam', '1'); syncPerm();
+    msg.style.display = 'none'; camActive = true; ls.set('rc_cam', '1'); syncPerm(); syncFlash();
   } catch (e) {
     msg.style.display = 'flex';
     camActive = false; syncPerm(); $('#msgTxt').textContent = 'Camera is not active yet. Allow camera access in the browser prompt (requires HTTPS or localhost).';
@@ -543,10 +566,11 @@ async function toggleRec() {
   rec.onstop = async () => {
     clearInterval(recTimer); $('#shot').classList.remove('rec'); if (mic) mic.getTracks().forEach(t => t.stop());
     const blob = new Blob(chunks, { type: rec.mimeType || mime || 'video/webm' });
-    rec = null; vcOn = false;
+    rec = null; vcOn = false; endFlash();
     await addPhoto({ blob, type: 'video', lens, date: stampText(), ts: Date.now(), tpl: tplKey });
     refreshGallery();
   };
+  if (flashOn) setTorch(true); // video: lampu menyala terus selama merekam (jika tersedia)
   rec.start(1000); beep(); recStart = Date.now(); $('#shot').classList.add('rec');
   recTimer = setInterval(() => { const t = (Date.now() - recStart) / 1000 | 0; $('#count').textContent = '● ' + String(t / 60 | 0).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }, 500);
 }
@@ -554,11 +578,13 @@ const doShot = async () => {
   if (!rec && !video.videoWidth) { startCam(); return; } // pertama kali: munculkan dialog izin kamera
   if (mode === 'video') return toggleRec();
   if (!video.videoWidth) return;
+  await fireFlash();
   beep();
   const f = $('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
   seed = Math.random() * 1e9 | 0; // posisi light leak & debu unik tiap foto
   const c = document.createElement('canvas'); const [cw, ch] = dims(1200); c.width = cw; c.height = ch;
   render(c.getContext('2d'), c.width, c.height);
+  endFlash();
   openTpl(c); // pilih template dulu sebelum masuk galeri
 };
 
@@ -584,6 +610,8 @@ $('#micToggle').onclick = async () => {
   $('#permNote').textContent = ok ? 'Microphone on: video will be recorded with sound.' : 'Microphone denied. Allow it in your browser site settings.';
 };
 $('#camAsk').onclick = () => startCam();
+$('#flashBtn').onclick = () => { flashOn = !flashOn; ls.set('rc_flash', flashOn ? '1' : '0'); syncFlash(); if (!flashOn) endFlash(); else if (rec) setTorch(true); };
+syncFlash();
 $('#bri').oninput = e => { userBri = +e.target.value; $('#briTxt').textContent = (userBri > 0 ? '+' : '') + userBri; };
 
 // ===== Timer =====

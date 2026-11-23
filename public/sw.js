@@ -1,5 +1,5 @@
 /* Retro Cam service worker. Naikkan VERSION setiap deploy agar cache diperbarui. */
-const VERSION = 'retro-cam-v-7';
+const VERSION = 'retro-cam-v8';
 const PRECACHE = [
   '/', '/camera',
   '/css/base.css', '/css/fonts.css',
