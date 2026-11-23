@@ -1,7 +1,12 @@
 (function () {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function (e) { console.warn('SW gagal:', e); });
+      navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).then(function (r) {
+        // cek versi baru tiap aplikasi dibuka kembali / tiap 30 menit
+        var chk = function () { r.update().catch(function () {}); };
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) chk(); });
+        setInterval(chk, 30 * 60 * 1000);
+      }).catch(function (e) { console.warn('SW gagal:', e); });
     });
   }
 

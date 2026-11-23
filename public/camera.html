@@ -156,6 +156,7 @@ html[data-theme=silver]{--body:#e4e7ec;--body2:#aeb6c1;--key:#4a5361;--lcd:#5aa6
     <label>Date stamp</label><div class="row"><button class="chip on" id="stampBtn">ON</button></div>
     <label>Template (photo &amp; video)</label><div class="row" id="tplMenuRow"></div>
     <label>Camera theme</label><div class="row" id="themeRow"></div>
+    <label>App update <span id="verTxt" style="opacity:.7"></span></label><div class="row"><button class="chip" id="updBtn">CHECK FOR UPDATE</button></div><div id="updNote" style="font-size:18px;opacity:.75;margin-top:4px">Your photos &amp; videos are kept.</div>
     <button class="chip" id="closeMenu" style="margin-top:14px;width:100%">Done</button>
   </div></div>
   <div id="gal">
@@ -211,9 +212,10 @@ Object.assign(LENS, {
   nokia80:  { name:'NOKIA 1980', lw:64, pal:[[22,8,0],[96,42,0],[196,104,6],[255,184,48]], con:1.35, grain:12, gridc:'rgba(40,12,0,.22)', ink:'#2a0e00' },
   bbpearl:  { name:'BB PEARL',  lw:160, post:40, sat:.88, con:1.15, bri:6,  mul:[1,1.03,1.06], add:[0,4,8], fade:.12, grain:30, vig:.30 },
   bbcurve:  { name:'BB CURVE',  lw:240, post:56, sat:.78, con:1.22, bri:12, mul:[1.02,1,1.06], add:[2,2,8], fade:.10, grain:34, vig:.35, bloom:.10 },
+  fisheye:  { name:'FISHEYE',   fish:1.6, sat:1.3, con:1.15, bri:4, mul:[1.03,1.02,.97], add:[4,2,-2], fade:.06, grain:24, vig:.75, bloom:.14, dust:1 },
   super8:   { name:'SUPER 8',   lw:280, sat:1.1, con:1.12, bri:8, mul:[1.1,1,.84], add:[14,4,-10], fade:.20, grain:46, vig:.70, bloom:.20, hal:.35, leak:.35, dust:1 }
 });
-const LENS_ORDER = ['kodak','fuji400','velvia','fujic200','agfa','lomo','dispo','polaroid','dreamy','bw','trix','vga','digicam','nokia03','nokia00','nokia80','bbpearl','bbcurve','vhs','super8'];
+const LENS_ORDER = ['kodak','fuji400','velvia','fujic200','agfa','lomo','dispo','polaroid','dreamy','bw','trix','vga','fisheye','digicam','nokia03','nokia00','nokia80','bbpearl','bbcurve','vhs','super8'];
 Object.keys(LENS).forEach(k => { if (!LENS_ORDER.includes(k)) LENS_ORDER.push(k); });
 let timerSec = 0, cdTimer = null, tplKey = 'none';
 
@@ -298,6 +300,24 @@ function render(ctx, W, H) {
   tx.restore();
 
   const im = tx.getImageData(0, 0, w, h), d = im.data, cxm = w / 2, cym = h / 2;
+  if (L.fish) { // distorsi fisheye (barrel) dengan sampling bilinear
+    const src = new Uint8ClampedArray(d), kf = L.fish, md2 = cxm * cxm + cym * cym;
+    for (let yy = 0, o = 0; yy < h; yy++) {
+      const dy = yy + .5 - cym;
+      for (let xx = 0; xx < w; xx++, o += 4) {
+        const dx = xx + .5 - cxm, rr = (dx * dx + dy * dy) / md2;
+        const sc = (1 + kf * rr) / (1 + kf);
+        let sx = cxm + dx * sc - .5, sy = cym + dy * sc - .5;
+        sx = sx < 0 ? 0 : sx > w - 1.001 ? w - 1.001 : sx; sy = sy < 0 ? 0 : sy > h - 1.001 ? h - 1.001 : sy;
+        const x0 = sx | 0, y0 = sy | 0, fx = sx - x0, fy = sy - y0;
+        const a = (y0 * w + x0) * 4, b = a + 4, c = a + w * 4, e = c + 4;
+        const w0 = (1 - fx) * (1 - fy), w1 = fx * (1 - fy), w2 = (1 - fx) * fy, w3 = fx * fy;
+        d[o]   = src[a]   * w0 + src[b]   * w1 + src[c]   * w2 + src[e]   * w3;
+        d[o+1] = src[a+1] * w0 + src[b+1] * w1 + src[c+1] * w2 + src[e+1] * w3;
+        d[o+2] = src[a+2] * w0 + src[b+2] * w1 + src[c+2] * w2 + src[e+2] * w3;
+      }
+    }
+  }
   for (let i = 0, p = 0; i < d.length; i += 4, p++) {
     let r = d[i], g = d[i+1], b = d[i+2];
     const lum = .299*r + .587*g + .114*b;
@@ -726,6 +746,61 @@ setInterval(() => { const t = new Date(); $('#clock').textContent = String(t.get
   if (document.fonts) await Promise.all([document.fonts.load("20px 'VT323'"), document.fonts.load("600 20px 'Caveat'"), document.fonts.load("20px 'Special Elite'")]);
   applyFormat(); syncPerm(); requestAnimationFrame(loop);
   if (ls.get('rc_cam') === '1') await startCam(); else showMsg('Allow camera access to start shooting.');
+})();
+</script>
+<script>
+// ===== Update aplikasi: bandingkan versi sw.js di server dengan versi yang sedang dipakai halaman ini.
+// Yang dihapus hanya Cache Storage + Service Worker. Galeri (IndexedDB) & pengaturan (localStorage) TIDAK disentuh. =====
+(() => {
+  const $ = s => document.querySelector(s);
+  const btn = $('#updBtn'), note = $('#updNote'), ver = $('#verTxt'), mb = $('#menuBtn');
+  if (!btn) return;
+  if (!('serviceWorker' in navigator)) { btn.disabled = true; note.textContent = 'Update not supported on this browser.'; return; }
+  let loadedVer = null, found = false;
+  const ask = (w, type) => new Promise(res => {
+    if (!w) return res(null);
+    const ch = new MessageChannel(); ch.port1.onmessage = e => res(e.data);
+    w.postMessage({ type }, [ch.port2]); setTimeout(() => res(null), 1500);
+  });
+  const activeVer = async () => { try { const r = await navigator.serviceWorker.getRegistration(); return await ask(r && r.active, 'GET_VERSION'); } catch (_) { return null; } };
+  const remoteVer = async () => { // baca VERSION langsung dari sw.js di server (tanpa cache)
+    const t = await (await fetch('/sw.js', { cache: 'no-store' })).text();
+    const m = t.match(/VERSION\s*=\s*['"]([^'"]+)['"]/); return m && m[1];
+  };
+  const mark = on => {
+    found = on; btn.textContent = on ? 'UPDATE NOW' : 'CHECK FOR UPDATE'; btn.classList.toggle('on', on);
+    mb.textContent = on ? 'Menu ●' : 'Menu';
+    if (on) note.textContent = 'New version found. Photos & videos are kept.';
+  };
+  async function check(silent) {
+    if (!navigator.onLine) { if (!silent) note.textContent = 'You are offline. Connect to the internet to check.'; return false; }
+    try {
+      if (!silent) note.textContent = 'Checking…';
+      const r = await navigator.serviceWorker.getRegistration(); if (r) r.update().catch(() => {});
+      const [rv, av] = await Promise.all([remoteVer(), activeVer()]);
+      if (!loadedVer) loadedVer = av;
+      const has = !!rv && !!loadedVer && rv !== loadedVer;
+      mark(has); if (!silent && !has) note.textContent = 'You have the latest version.';
+      return has;
+    } catch (_) { if (!silent) note.textContent = 'Could not check. Try again later.'; return false; }
+  }
+  async function doUpdate() {
+    if (!navigator.onLine) { note.textContent = 'You are offline. Connect to the internet to update.'; return; }
+    btn.disabled = true; note.textContent = 'Updating…';
+    try {
+      const r = await navigator.serviceWorker.getRegistration();
+      if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } // hanya Cache Storage
+      if (r) await r.unregister(); // pwa.js mendaftarkan ulang SW terbaru saat halaman dimuat ulang
+    } catch (_) {}
+    const u = new URL(location.href); u.searchParams.set('_u', Date.now()); location.replace(u.toString());
+  }
+  btn.onclick = () => found ? doUpdate() : check(false).then(h => { if (h) doUpdate(); });
+  mb.addEventListener('click', async () => { const v = await activeVer(); if (v) ver.textContent = '(' + v + ')'; check(true); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) check(true); });
+  window.addEventListener('load', async () => { // tunggu SW aktif agar versi awal halaman tercatat
+    try { await navigator.serviceWorker.ready; } catch (_) {}
+    loadedVer = await activeVer(); const v = loadedVer; if (v) ver.textContent = '(' + v + ')'; check(true);
+  });
 })();
 </script>
 <script src="/js/pwa.js" defer></script>

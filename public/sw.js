@@ -1,5 +1,5 @@
 /* Retro Cam service worker. Naikkan VERSION setiap deploy agar cache diperbarui. */
-const VERSION = 'retro-cam-v5';
+const VERSION = 'retro-cam-v-7';
 const PRECACHE = [
   '/', '/camera',
   '/css/base.css', '/css/fonts.css',
@@ -14,11 +14,19 @@ self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
 
+self.addEventListener('message', e => {
+  const t = e.data && e.data.type;
+  if (t === 'SKIP_WAITING') self.skipWaiting();
+  if (t === 'GET_VERSION' && e.ports[0]) e.ports[0].postMessage(VERSION);
+});
+
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window' }))
+      .then(cs => cs.forEach(c => c.postMessage({ type: 'SW_UPDATED', version: VERSION })))
   );
 });
 
